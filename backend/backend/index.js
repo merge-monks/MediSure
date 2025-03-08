@@ -1,5 +1,7 @@
 import { configDotenv } from "dotenv";
 import authRoute from "./routes/auth.routes.js";
+import profileRoute from "./routes/profile.routes.js";
+import medicalRoute from "./routes/medical.routes.js";
 import connectToMongoDB from "./db/connectToMongodb.js";
 import MongoStore from "connect-mongo";
 import session from "express-session";
@@ -12,7 +14,7 @@ import cors from "cors";
 configDotenv();
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5174',
+  origin: 'http://localhost:8081',
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type,Authorization'
 }));
@@ -39,6 +41,8 @@ app.use(
 );
 
 app.use("/api/auth", authRoute);
+app.use("/api/profile", profileRoute);
+app.use("/api/medications", medicalRoute);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
