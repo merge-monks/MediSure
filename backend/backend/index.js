@@ -14,11 +14,12 @@ import cors from "cors";
 configDotenv();
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:8081',
-  methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: 'Content-Type,Authorization'
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
-app.use(cors());
+
 app.use(express.json());
 app.use(cookieParser());
 
