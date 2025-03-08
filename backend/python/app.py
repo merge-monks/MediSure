@@ -5,16 +5,12 @@ import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import transforms
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import io
-import base64
-import time
+from bone import predict_bone
 
 app = Flask(__name__)
 # Configure CORS properly - allow all origins explicitly
@@ -118,14 +114,9 @@ def predict_tumor():
         buf.seek(0)
         
         response = make_response(send_file(buf, mimetype='image/png'))
-        
-        # Add the prediction as a custom header
-        response.headers.add('X-Prediction', predicted_label)
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        # Add the custom header to the exposed headers
-        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
         
         # Clean up the file after processing
         if os.path.exists(file_path):
@@ -138,5 +129,37 @@ def predict_tumor():
             os.remove(file_path)
         return jsonify({'error': str(e)}), 500
 
+@app.route('/predict_bone_route', methods=['POST'])
+def predict_bone_route():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(file_path)
+    
+    seg_mask, predicted_label = predict_bone(file_path)
+    
+    original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+    original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+    
+
+    plt.figure(figsize=(6, 6))
+    plt.imshow(original_image, cmap='gray')
+    plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+    plt.title(f"Predicted: {predicted_label}")
+    plt.axis("off")
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+    plt.close()  # Close the figure to prevent memory leaks
+    buf.seek(0)
+    
+    return send_file(buf, mimetype='image/png')
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
