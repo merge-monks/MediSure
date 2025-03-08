@@ -269,8 +269,11 @@ const MedisureDashboard = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="flex items-center bg-cyan-500 to-blue-500 text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
+            <button className="flex items-center bg-cyan-500 to-blue-500 text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+                          onClick={navigateToScanReports}
+>
               <Plus size={18} className="mr-2" />
+
               <span>New Scan</span>
             </button>
             <div className="relative">
@@ -287,6 +290,7 @@ const MedisureDashboard = () => {
                 <span className="text-sm font-medium text-slate-700 block leading-tight">
                   Dr. Manas Kumar
                 </span>
+                <span className="text-sm font-medium text-slate-700 block leading-tight">Dr. Manas Kumar Thakur</span>
                 <span className="text-xs text-slate-500">Radiology</span>
               </div>
               <ChevronRight size={16} className="ml-2 text-slate-400" />
