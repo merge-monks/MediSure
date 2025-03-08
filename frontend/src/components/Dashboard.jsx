@@ -95,8 +95,8 @@ const MedisureDashboard = () => {
             ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             w-64 lg:w-72 bg-gradient-to-br from-cyan-700 to-blue-900 p-6 flex flex-col text-white shadow-xl`}>
         <div className="flex items-center mb-10">
-          <div className="bg-white text-cyan-600 p-2 rounded-lg shadow-md">
-            <div className="h-6 w-6 flex items-center justify-center font-bold">+</div>
+          <div className="bg-white text-cyan-600 p-2 rounded-lg shadow-md flex items-center justify-center">
+            <div className="h-6 w-6 pb-2 text-3xl flex items-center justify-center font-extrabold leading-none m">+</div>
           </div>
           <h1 className="ml-3 font-bold text-2xl tracking-tight">Medisure</h1>
         </div>
