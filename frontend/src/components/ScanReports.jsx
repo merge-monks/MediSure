@@ -163,22 +163,51 @@ const ScanReports = () => {
     return "Unknown";
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Extract predictions from results
     const tumorTypes = analysisResults
       .filter(result => !result.isError)
       .map(result => result.prediction || "Unknown");
     
-    // Log patient data and predictions to console
-    console.log({
-      "Patient's Name": patientName,
-      "Scan Type": scanType,
-      "Predicted": tumorTypes.length > 0 ? tumorTypes : ["No predictions available"]
-    });
+    const reportData = {
+      patientName,
+      scanType,
+      predictions: tumorTypes
+    };
     
-    // Show custom alert instead of using browser alert
-    setAlertMessage("Data submitted successfully!");
-    setShowAlert(true);
+    // Set uploading state
+    setUploadStatus("uploading");
+    
+    try {
+      const response = await fetch("http://localhost:4000/api/medical/scanReports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportData),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save report");
+      }
+      
+      const data = await response.json();
+      
+      // Log success and show alert with more detailed message
+      console.log("Report saved successfully:", data);
+      setUploadStatus("success");
+      setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! Report ID: ${data.reportId}`);
+      setShowAlert(true);
+      
+    } catch (error) {
+      console.error("Error saving report:", error);
+      setUploadStatus("error");
+      setAnalysisError(error.message || "Failed to submit report to database");
+      setAlertMessage("Error: Failed to save data. Please try again.");
+      setShowAlert(true);
+    }
   };
 
   // Add function to clear the form after submission
@@ -447,11 +476,28 @@ const ScanReports = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 animate-fade-in">
                 <div className="flex flex-col items-center text-center">
-                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Check size={32} className="text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">Success!</h3>
-                  <p className="text-slate-600 mb-6">{alertMessage}</p>
+                  {uploadStatus === "success" ? (
+                    <>
+                      <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                        <Check size={32} className="text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-2">Data Stored Successfully!</h3>
+                      <p className="text-slate-600 mb-6">{alertMessage}</p>
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200 mb-4 text-left w-full">
+                        <p className="text-sm text-green-700">
+                          <span className="font-medium">Database confirmation:</span> Medical scan data has been saved in the system and is now available for review.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <AlertCircle size={32} className="text-red-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-2">Error</h3>
+                      <p className="text-slate-600 mb-6">{alertMessage}</p>
+                    </>
+                  )}
                   <button
                     onClick={clearForm}
                     className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer w-full"
