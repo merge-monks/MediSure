@@ -1,4 +1,5 @@
 import opendatasets as od
+import cgi
 import os
 import cv2
 import numpy as np
@@ -9,11 +10,13 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS  # Import CORS
 from werkzeug.utils import secure_filename
 import io
 import base64
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
