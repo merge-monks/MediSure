@@ -9,9 +9,18 @@ const ScanReports = () => {
   const fileInputRef = useRef(null);
   const [analysisResults, setAnalysisResults] = useState([]);
   const [analysisError, setAnalysisError] = useState(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  const navigateToHome = () => {
-    navigate('/');
+ 
+  const navigateToDash = () => {
+    navigate('/Dashboard');
+  }
+  const handleCancel = () => {
+    // Clear selected files and reset states
+    setSelectedFiles([]);
+    setUploadStatus(null);
+    setAnalysisResults([]);
+    setAnalysisError(null);
   };
 
   const handleFileSelect = (e) => {
@@ -27,44 +36,66 @@ const ScanReports = () => {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       setUploadStatus('error');
+      setAnalysisError('Please select files to upload.');
       return;
     }
 
     setUploadStatus('uploading');
     setAnalysisResults([]);
     setAnalysisError(null);
+    setProgress({ current: 0, total: selectedFiles.length });
     
-    try {
-      const uploadPromises = selectedFiles.map(async (file) => {
+    const results = [];
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      setProgress({ current: i + 1, total: selectedFiles.length });
+      
+      try {
         const formData = new FormData();
         formData.append('file', file);
         
         const response = await fetch('http://127.0.0.1:5000/predict', {
           method: 'POST',
           body: formData,
+          // Explicitly set mode to cors
+          mode: 'cors',
+          headers: {
+            'Accept': 'image/png',
+          },
         });
         
         if (!response.ok) {
-          throw new Error(`Server responded with ${response.status}`);
+          throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
         
         // Get the blob from the response
         const imageBlob = await response.blob();
         const imageUrl = URL.createObjectURL(imageBlob);
         
-        return {
+        results.push({
           fileName: file.name,
           resultImage: imageUrl
-        };
-      });
-      
-      const results = await Promise.all(uploadPromises);
-      setAnalysisResults(results);
+        });
+      } catch (error) {
+        console.error(`Error analyzing image ${file.name}:`, error);
+        results.push({
+          fileName: file.name,
+          error: error.message,
+          isError: true
+        });
+      }
+    }
+    
+    setAnalysisResults(results);
+    
+    // Check if any results had errors
+    const hasErrors = results.some(result => result.isError);
+    if (hasErrors) {
+      setUploadStatus('partial');
+      setAnalysisError('Some files could not be analyzed. Check the results below.');
+    } else {
       setUploadStatus('success');
-    } catch (error) {
-      console.error('Error analyzing images:', error);
-      setAnalysisError(error.message);
-      setUploadStatus('error');
     }
   };
 
@@ -78,7 +109,7 @@ const ScanReports = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center mb-8">
           <button 
-            onClick={navigateToHome}
+            onClick={navigateToDash}
             className="p-2 mr-4 rounded-full bg-white shadow-sm hover:shadow-md transition-all text-slate-600 cursor-pointer"
           >
             <ArrowLeft size={20} />
@@ -145,16 +176,20 @@ const ScanReports = () => {
           {uploadStatus && (
             <div className={`mt-4 p-3 rounded-lg flex items-center
               ${uploadStatus === 'uploading' ? 'bg-blue-50 text-blue-700' : 
-                uploadStatus === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`
+                uploadStatus === 'success' ? 'bg-green-50 text-green-700' : 
+                uploadStatus === 'partial' ? 'bg-yellow-50 text-yellow-700' :
+                'bg-red-50 text-red-700'}`
               }
             >
               {uploadStatus === 'uploading' && <div className="animate-spin h-5 w-5 border-2 border-blue-700 border-t-transparent rounded-full mr-2"></div>}
               {uploadStatus === 'success' && <Check size={18} className="mr-2" />}
+              {uploadStatus === 'partial' && <AlertCircle size={18} className="mr-2" />}
               {uploadStatus === 'error' && <AlertCircle size={18} className="mr-2" />}
               
               <span className="text-sm font-medium">
-                {uploadStatus === 'uploading' && 'Analyzing images...'}
+                {uploadStatus === 'uploading' && `Analyzing images... (${progress.current}/${progress.total})`}
                 {uploadStatus === 'success' && 'Analysis completed successfully!'}
+                {uploadStatus === 'partial' && analysisError}
                 {uploadStatus === 'error' && analysisError ? `Error: ${analysisError}` : 'Please select files to upload.'}
               </span>
             </div>
@@ -166,16 +201,23 @@ const ScanReports = () => {
               <h3 className="font-bold text-lg text-slate-700 mb-4">Analysis Results</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {analysisResults.map((result, index) => (
-                  <div key={index} className="border rounded-lg overflow-hidden shadow-sm">
-                    <div className="p-3 bg-slate-50 border-b">
+                  <div key={index} className={`border rounded-lg overflow-hidden shadow-sm ${result.isError ? 'border-red-300' : ''}`}>
+                    <div className={`p-3 ${result.isError ? 'bg-red-50' : 'bg-slate-50'} border-b`}>
                       <p className="font-medium text-slate-700 truncate">{result.fileName}</p>
                     </div>
                     <div className="p-4 flex justify-center">
-                      <img 
-                        src={result.resultImage} 
-                        alt={`Analysis result for ${result.fileName}`} 
-                        className="max-w-full h-auto rounded"
-                      />
+                      {result.isError ? (
+                        <div className="flex flex-col items-center text-red-500 p-4">
+                          <AlertCircle size={48} className="mb-2" />
+                          <p className="text-center">{result.error}</p>
+                        </div>
+                      ) : (
+                        <img 
+                          src={result.resultImage} 
+                          alt={`Analysis result for ${result.fileName}`} 
+                          className="max-w-full h-auto rounded"
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -186,7 +228,7 @@ const ScanReports = () => {
           {/* Action buttons */}
           <div className="mt-8 flex justify-end">
             <button
-              onClick={navigateToHome}
+              onClick={handleCancel}
               className="px-6 py-2.5 mr-4 border border-slate-300 rounded-xl text-slate-700 font-medium hover:bg-slate-50 transition-colors cursor-pointer"
             >
               Cancel

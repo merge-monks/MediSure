@@ -9,14 +9,23 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import matplotlib.pyplot as plt
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS  # Import CORS
+from flask import Flask, request, jsonify, send_file, make_response
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import io
 import base64
+import time
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Configure CORS properly - allow all origins explicitly
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",  # Allow all origins
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -69,8 +78,16 @@ def predict(image_path):
     predicted_label = tumor_types[class_output.argmax(dim=1).item()]
     return seg_mask, predicted_label
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict_tumor():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+        
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
@@ -79,27 +96,42 @@ def predict_tumor():
         return jsonify({'error': 'No selected file'}), 400
     
     filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    timestamp = str(int(time.time()))
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{timestamp}_{filename}")
     file.save(file_path)
     
-    seg_mask, predicted_label = predict(file_path)
-    
-    original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-    original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
-    
-
-    plt.figure(figsize=(6, 6))
-    plt.imshow(original_image, cmap='gray')
-    plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
-    plt.title(f"Predicted: {predicted_label}")
-    plt.axis("off")
-    
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
-    plt.close()  # Close the figure to prevent memory leaks
-    buf.seek(0)
-    
-    return send_file(buf, mimetype='image/png')
+    try:
+        seg_mask, predicted_label = predict(file_path)
+        
+        original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(original_image, cmap='gray')
+        plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+        plt.title(f"Predicted: {predicted_label}")
+        plt.axis("off")
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+        plt.close()
+        buf.seek(0)
+        
+        response = make_response(send_file(buf, mimetype='image/png'))
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        
+        # Clean up the file after processing
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        return response
+        
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
