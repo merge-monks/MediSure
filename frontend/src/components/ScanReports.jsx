@@ -1,6 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, FileText, Image, AlertCircle, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from "react";
+import {
+  ArrowLeft,
+  Upload,
+  FileText,
+  Image,
+  AlertCircle,
+  Check,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ScanReports = () => {
   const navigate = useNavigate();
@@ -40,7 +47,7 @@ const ScanReports = () => {
       return;
     }
 
-    setUploadStatus('uploading');
+    setUploadStatus("uploading");
     setAnalysisResults([]);
     setAnalysisError(null);
     setProgress({ current: 0, total: selectedFiles.length });
@@ -53,10 +60,10 @@ const ScanReports = () => {
       
       try {
         const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await fetch('http://127.0.0.1:5000/predict', {
-          method: 'POST',
+        formData.append("file", file);
+
+        const response = await fetch("http://127.0.0.1:5000/predict", {
+          method: "POST",
           body: formData,
           // Explicitly set mode to cors
           mode: 'cors',
@@ -64,11 +71,11 @@ const ScanReports = () => {
             'Accept': 'image/png',
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
-        
+
         // Get the blob from the response
         const imageBlob = await response.blob();
         const imageUrl = URL.createObjectURL(imageBlob);
@@ -114,41 +121,57 @@ const ScanReports = () => {
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-slate-800">Scan Medical Reports</h1>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Scan Medical Reports
+          </h1>
         </div>
 
         {/* Main content area */}
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="text-center mb-8">
-            <h2 className="text-xl font-bold text-slate-700 mb-2">Upload Medical Scan Images</h2>
-            <p className="text-slate-500">Upload your medical scan images for AI analysis</p>
+            <h2 className="text-xl font-bold text-slate-700 mb-2">
+              Upload Medical Scan Images
+            </h2>
+            <p className="text-slate-500">
+              Upload your medical scan images for AI analysis
+            </p>
           </div>
 
           {/* File upload area */}
-          <div 
+          <div
             className={`border-2 border-dashed rounded-xl p-10 text-center
-              ${selectedFiles.length > 0 ? 'border-cyan-300 bg-cyan-50' : 'border-slate-300 hover:border-cyan-400'}
+              ${
+                selectedFiles.length > 0
+                  ? "border-cyan-300 bg-cyan-50"
+                  : "border-slate-300 hover:border-cyan-400"
+              }
               transition-all cursor-pointer`}
             onClick={openFileExplorer}
           >
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref={fileInputRef}
               className="hidden"
               accept="image/*"
               multiple
               onChange={handleFileSelect}
             />
-            
+
             <div className="flex flex-col items-center">
               {selectedFiles.length === 0 ? (
                 <>
                   <div className="h-16 w-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
                     <Upload size={32} className="text-cyan-600" />
                   </div>
-                  <h3 className="font-medium text-lg text-slate-700 mb-2">Click to upload or drag and drop</h3>
-                  <p className="text-slate-500 text-sm mb-2">Supported formats: JPEG, PNG, DICOM, TIFF</p>
-                  <p className="text-xs text-slate-400">Maximum file size: 50MB</p>
+                  <h3 className="font-medium text-lg text-slate-700 mb-2">
+                    Click to upload or drag and drop
+                  </h3>
+                  <p className="text-slate-500 text-sm mb-2">
+                    Supported formats: JPEG, PNG, DICOM, TIFF
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Maximum file size: 50MB
+                  </p>
                 </>
               ) : (
                 <>
@@ -156,14 +179,22 @@ const ScanReports = () => {
                     <FileText size={32} className="text-cyan-600" />
                   </div>
                   <h3 className="font-medium text-lg text-slate-700 mb-1">
-                    {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                    {selectedFiles.length}{" "}
+                    {selectedFiles.length === 1 ? "file" : "files"} selected
                   </h3>
-                  <p className="text-sm text-cyan-600 mb-2">Click to change selection</p>
+                  <p className="text-sm text-cyan-600 mb-2">
+                    Click to change selection
+                  </p>
                   <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
                     {selectedFiles.map((file, index) => (
-                      <div key={index} className="bg-white p-2 rounded-lg shadow-sm flex items-center">
+                      <div
+                        key={index}
+                        className="bg-white p-2 rounded-lg shadow-sm flex items-center"
+                      >
                         <Image size={16} className="text-cyan-500 mr-2" />
-                        <span className="text-sm text-slate-600 truncate max-w-[150px]">{file.name}</span>
+                        <span className="text-sm text-slate-600 truncate max-w-[150px]">
+                          {file.name}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -198,7 +229,9 @@ const ScanReports = () => {
           {/* Analysis Results Section */}
           {analysisResults.length > 0 && (
             <div className="mt-8">
-              <h3 className="font-bold text-lg text-slate-700 mb-4">Analysis Results</h3>
+              <h3 className="font-bold text-lg text-slate-700 mb-4">
+                Analysis Results
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {analysisResults.map((result, index) => (
                   <div key={index} className={`border rounded-lg overflow-hidden shadow-sm ${result.isError ? 'border-red-300' : ''}`}>
@@ -235,11 +268,17 @@ const ScanReports = () => {
             </button>
             <button
               onClick={handleUpload}
-              disabled={uploadStatus === 'uploading' || selectedFiles.length === 0}
+              disabled={
+                uploadStatus === "uploading" || selectedFiles.length === 0
+              }
               className={`px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer
-                ${(uploadStatus === 'uploading' || selectedFiles.length === 0) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                ${
+                  uploadStatus === "uploading" || selectedFiles.length === 0
+                    ? "opacity-70 cursor-not-allowed"
+                    : ""
+                }`}
             >
-              {uploadStatus === 'uploading' ? 'Analyzing...' : 'Analyze Scans'}
+              {uploadStatus === "uploading" ? "Analyzing..." : "Analyze Scans"}
             </button>
           </div>
         </div>
