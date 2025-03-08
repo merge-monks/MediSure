@@ -148,7 +148,7 @@ const MedisureDashboard = () => {
           
           <div className="flex items-center space-x-3">
             <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
-              API Selections
+              Scan Reports
             </button>
             <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
               <Settings size={20} />

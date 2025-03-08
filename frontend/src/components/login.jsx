@@ -21,7 +21,7 @@ const Login = () => {
     
     try {
       await loginUser(formData);
-      navigate('/home');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Invalid email or password');
       console.error('Login error:', err);
@@ -96,15 +96,8 @@ const Login = () => {
               <h2 className="text-2xl font-bold text-slate-800">Log in to your account</h2>
               <p className="text-slate-500 mt-2">Enter your credentials to access your dashboard</p>
             </div>
-            <div className="lg:w-1/2 flex justify-center items-center p-8 lg:p-16">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl font-bold text-slate-800">Log in to your account</h2>
-              <p className="text-slate-500 mt-2">Enter your credentials to access your dashboard</p>
-            </div>
             
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
@@ -119,8 +112,7 @@ const Login = () => {
                       name="email"
                       type="email"
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={handleChange}
                       className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                       placeholder="doctor@hospital.com"
                     />
@@ -143,8 +135,7 @@ const Login = () => {
                       name="password"
                       type={showPassword ? "text" : "password"}
                       required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={handleChange}
                       className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                       placeholder="Enter your password"
                     />
@@ -181,9 +172,9 @@ const Login = () => {
                   <button
                     type="submit"
                     className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all"
-                    disabled={loading}
+                    disabled={isLoading}
                   >
-                    {loading ? (
+                    {isLoading ? (
                       <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -218,68 +209,9 @@ const Login = () => {
       </div>
     </div>
 
-      
-        {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-600 rounded">
-            {error}
-          </div>
-        )}
-        {/* form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          {/* email */}
-          <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              onChange={handleChange}
-              required
-              className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-            />
-          </div>
-          </div>
-          {/* password */}
-          <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-          <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-              onChange={handleChange}
-              required
-            />
-          <button
-            type="submit"
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Loading...' : 'Login'}
-          </button>
-          </div>
-          </div>
-          </div>
-        </form>
-        <p className="mt-4 text-center">
-          Don't have an account? <Link to="/signup" className="text-blue-500">Sign up</Link>
-        </p>
-      </div>
-    </div>
-    </div>
+    
+        
+    
   );
 };
 
