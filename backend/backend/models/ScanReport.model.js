@@ -9,10 +9,14 @@ const scanReportSchema = new mongoose.Schema({
   scanType: {
     type: String,
     required: true,
-    enum: ["CT scan", "MRI scan"], // Limit to valid scan types
+    enum: ["CT scan", "MRI scan"], 
   },
   predictions: {
     type: [String],
+    default: [],
+  },
+  images: {
+    type: [String],  // Array of image URLs or paths
     default: [],
   },
   timestamp: {
@@ -21,7 +25,7 @@ const scanReportSchema = new mongoose.Schema({
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Reference to User model if you have one
+    ref: "User", 
   },
 });
 

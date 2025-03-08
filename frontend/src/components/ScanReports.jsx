@@ -75,6 +75,7 @@ const ScanReports = () => {
     
     const results = [];
     const extractedPredictions = [];
+    const imageFilenames = []; // Store image filenames
     
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
@@ -102,18 +103,21 @@ const ScanReports = () => {
         // Get the prediction data from headers or JSON
         let prediction = "Unknown";
         const contentType = response.headers.get('Content-Type');
+        let imageFilename = null; // Store the image filename from response
         
         if (contentType && contentType.includes('application/json')) {
           const jsonData = await response.json();
           prediction = jsonData.prediction || "Unknown";
           
-          // Get the image URL if provided
+          // Get the image URL and filename if provided
           const imageUrl = jsonData.image_url ? jsonData.image_url : null;
+          imageFilename = jsonData.image_filename || file.name;
           
           results.push({
             fileName: file.name,
             resultImage: imageUrl,
-            prediction: prediction
+            prediction: prediction,
+            imageFilename: imageFilename // Store the image filename
           });
         } else {
           // Get the blob from the response
@@ -122,12 +126,19 @@ const ScanReports = () => {
           
           // Get prediction from custom header if available
           prediction = response.headers.get('X-Prediction') || "Unknown";
+          imageFilename = response.headers.get('X-Image-Filename') || file.name;
           
           results.push({
             fileName: file.name,
             resultImage: imageUrl,
-            prediction: prediction
+            prediction: prediction,
+            imageFilename: imageFilename // Store the image filename
           });
+        }
+        
+        // Add the filename to our list if we got one
+        if (imageFilename) {
+          imageFilenames.push(imageFilename);
         }
         
         extractedPredictions.push(prediction);
@@ -144,6 +155,12 @@ const ScanReports = () => {
     
     setAnalysisResults(results);
     setPredictions(extractedPredictions);
+    
+    // Store the image filenames to be used during submission
+    const successfulResults = results.filter(result => !result.isError);
+    const validImageFilenames = successfulResults
+      .filter(result => result.imageFilename)
+      .map(result => result.imageFilename);
     
     // Check if any results had errors
     const hasErrors = results.some(result => result.isError);
@@ -169,10 +186,16 @@ const ScanReports = () => {
       .filter(result => !result.isError)
       .map(result => result.prediction || "Unknown");
     
+    // Extract image filenames
+    const imageFilenames = analysisResults
+      .filter(result => !result.isError && result.imageFilename)
+      .map(result => result.imageFilename);
+    
     const reportData = {
       patientName,
       scanType,
-      predictions: tumorTypes
+      predictions: tumorTypes,
+      images: imageFilenames // Add images array to the report data
     };
     
     // Set uploading state

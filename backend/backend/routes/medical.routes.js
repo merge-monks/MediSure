@@ -1,5 +1,5 @@
 import express from "express";
-import { createScanReport, getAllScanReports, getScanReportById } from "../controller/medical.controller.js";
+import { createScanReport, getAllScanReports, getScanReportById, getScanReportImages } from "../controller/medical.controller.js";
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.get("/scanReports", getAllScanReports);
 
 // Route for getting a specific scan report by ID
 router.get("/scanReports/:id", getScanReportById);
+
+// Route for getting images of a specific scan report
+router.get("/scanReports/:id/images", getScanReportImages);
 
 export default router;

@@ -3,7 +3,7 @@ import ScanReport from "../models/ScanReport.model.js";
 // Controller for handling scan report operations
 export const createScanReport = async (req, res) => {
   try {
-    const { patientName, scanType, predictions } = req.body;
+    const { patientName, scanType, predictions, images } = req.body;
     
     // Basic validation
     if (!patientName || !scanType) {
@@ -18,6 +18,7 @@ export const createScanReport = async (req, res) => {
       patientName,
       scanType,
       predictions: predictions || [],
+      images: images || [], // Store image filenames
       // If user authentication is implemented, include user ID
       // userId: req.user?._id
     });
@@ -44,14 +45,49 @@ export const createScanReport = async (req, res) => {
 // Get all scan reports
 export const getAllScanReports = async (req, res) => {
   try {
-    // Get all reports, sorted by newest first
     const reports = await ScanReport.find()
       .sort({ timestamp: -1 });
+    
+    // Transform data to match frontend expectations with focus on key information
+    const formattedReports = reports.map(report => {
+      // Generate colors based on scan type
+      const colorMap = {
+        "CT scan": "from-cyan-500 to-blue-500",
+        "MRI scan": "from-purple-500 to-indigo-500",
+        // Default fallback color
+        "default": "from-rose-400 to-red-500"
+      };
+      
+      const color = colorMap[report.scanType] || colorMap.default;
+      
+      // Format date
+      const date = new Date(report.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      
+      // Get primary finding (tumor type) from predictions
+      const tumorType = report.predictions && report.predictions.length > 0 
+        ? report.predictions[0]
+        : "No findings";
+      
+      return {
+        id: report._id,
+        name: report.scanType,
+        color: color,
+        description: tumorType,
+        date: date,
+        status: "Completed",
+        patient: report.patientName,
+        doctor: "Dr. Assigned"
+      };
+    });
     
     res.status(200).json({
       success: true,
       count: reports.length,
-      reports
+      reports: formattedReports
     });
   } catch (error) {
     console.error("Error fetching scan reports:", error);
@@ -86,6 +122,47 @@ export const getScanReportById = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: "Failed to fetch scan report",
+      error: error.message 
+    });
+  }
+};
+
+// Get images for a specific scan report
+export const getScanReportImages = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    
+    const report = await ScanReport.findById(reportId);
+    
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: "Scan report not found"
+      });
+    }
+    
+    // Format image paths to be the full URL to the Python backend
+    const imagePaths = report.images.map(filename => 
+      `http://127.0.0.1:5000/uploads/${filename}`
+    );
+    
+    // Return the images array from the report
+    res.status(200).json({
+      success: true,
+      images: imagePaths,
+      reportDetails: {
+        id: report._id,
+        patientName: report.patientName,
+        scanType: report.scanType,
+        predictions: report.predictions,
+        date: report.timestamp
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching scan report images:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch scan report images",
       error: error.message 
     });
   }

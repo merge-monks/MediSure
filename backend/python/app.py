@@ -9,12 +9,13 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import matplotlib.pyplot as plt
-from flask import Flask, request, jsonify, send_file, make_response
+from flask import Flask, request, jsonify, send_file, make_response, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import io
 import base64
 import time
+import uuid
 
 app = Flask(__name__)
 # Configure CORS properly - allow all origins explicitly
@@ -26,9 +27,14 @@ CORS(app, resources={
     }
 })
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tif', 'tiff', 'dicom', 'dcm'}
+
+# Create uploads directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 IMAGE_SIZE = 128  # Resize to 128x128
 
 class MultiTaskUNet(nn.Module):
@@ -78,6 +84,9 @@ def predict(image_path):
     predicted_label = tumor_types[class_output.argmax(dim=1).item()]
     return seg_mask, predicted_label
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict_tumor():
     # Handle preflight OPTIONS request
@@ -92,51 +101,66 @@ def predict_tumor():
         return jsonify({'error': 'No file provided'}), 400
     
     file = request.files['file']
+    patient_name = request.form.get('patientName', 'Unknown')
+    scan_type = request.form.get('scanType', 'CT scan')
+    
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     
-    filename = secure_filename(file.filename)
-    timestamp = str(int(time.time()))
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{timestamp}_{filename}")
-    file.save(file_path)
-    
-    try:
-        seg_mask, predicted_label = predict(file_path)
+    if file and allowed_file(file.filename):
+        # Create unique filename to prevent overwriting
+        filename = secure_filename(file.filename)
+        base, extension = os.path.splitext(filename)
+        unique_filename = f"{base}_{uuid.uuid4().hex}{extension}"
         
-        original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+        # Save the file
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
         
-        plt.figure(figsize=(6, 6))
-        plt.imshow(original_image, cmap='gray')
-        plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
-        plt.title(f"Predicted: {predicted_label}")
-        plt.axis("off")
-        
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
-        plt.close()
-        buf.seek(0)
-        
-        response = make_response(send_file(buf, mimetype='image/png'))
-        
-        # Add the prediction as a custom header
-        response.headers.add('X-Prediction', predicted_label)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        # Add the custom header to the exposed headers
-        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
-        
-        # Clean up the file after processing
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        try:
+            seg_mask, predicted_label = predict(file_path)
             
-        return response
-        
-    except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        return jsonify({'error': str(e)}), 500
+            original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+            
+            plt.figure(figsize=(6, 6))
+            plt.imshow(original_image, cmap='gray')
+            plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+            plt.title(f"Predicted: {predicted_label}")
+            plt.axis("off")
+            
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+            plt.close()
+            buf.seek(0)
+            
+            response = make_response(send_file(buf, mimetype='image/png'))
+            
+            # Add the prediction as a custom header
+            response.headers.add('X-Prediction', predicted_label)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            # Add the custom header to the exposed headers
+            response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
+            
+            # Clean up the file after processing
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
+            return response
+            
+        except Exception as e:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return jsonify({'error': str(e)}), 500
+
+    return jsonify({'error': 'File type not allowed'}), 400
+
+# Route to serve uploaded images
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
