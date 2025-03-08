@@ -4,6 +4,7 @@ import Login from './components/login'
 import Signup from './components/Signup'
 import Home from './components/Home'
 import './App.css'
+import MedisureDashboard from './components/Dashboard'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/dashboard" element={<MedisureDashboard />} />
       </Routes>
     </Router>
   )
