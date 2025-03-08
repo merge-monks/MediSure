@@ -4,6 +4,7 @@ import { signupUser } from '../services/authService';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
+    displayName: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -21,20 +22,28 @@ const Signup = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (formData.password.length < 5) {
+      setError('Password must be at least 5 characters long');
+      return;
+    }
+
+    if (formData.displayName.length < 5) {
+      setError('Name should be greater than 4 letters');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await signupUser({
+      const result = await signupUser({
+        displayName: formData.displayName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
       });
-      console.log('Signup successful:', response);
+      console.log('Signup successful:', result);
       navigate('/login');
     } catch (err) {
+      console.error('Signup error:', err);
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -58,6 +67,16 @@ const Signup = () => {
           </div>
         )}
         <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="text"
+              name="displayName"
+              placeholder="Full Name"
+              className="w-full px-3 py-2 border rounded"
+              onChange={handleChange}
+              required
+            />
+          </div>
           <div className="mb-4">
             <input
               type="email"

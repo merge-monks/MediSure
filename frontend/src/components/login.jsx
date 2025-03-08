@@ -18,11 +18,11 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await loginUser(formData);
-      console.log('Login successful:', response);
+      await loginUser(formData);
       navigate('/home');
     } catch (err) {
-      setError('Invalid email or password');
+      setError(err.message || 'Invalid email or password');
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
