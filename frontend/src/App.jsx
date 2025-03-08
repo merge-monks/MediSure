@@ -4,6 +4,7 @@ import Login from './components/login'
 import Signup from './components/signup'
 import './App.css'
 import MedisureDashboard from './components/Dashboard'
+import ScanReports from './components/ScanReports'
 
 function App() {
   return (
@@ -13,6 +14,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<MedisureDashboard />} />
+        <Route path="/ScanReports" element={<ScanReports/>} />
+
       </Routes>
     </Router>
   )

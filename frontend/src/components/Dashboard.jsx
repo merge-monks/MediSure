@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { Calendar, User, BarChart2, FileText, Users, Home, Settings, Bell, Search, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const MedisureDashboard = () => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(7);
   const [currentMonth, setCurrentMonth] = useState('January 2023');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
+  // Navigation functions
+  const navigateToScanReports = () => {
+    navigate('/ScanReports');
+  };
+
   // Calendar data
   const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
   const dates = [
@@ -147,13 +154,16 @@ const MedisureDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
+            <button 
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={navigateToScanReports}
+            >
               Scan Reports
             </button>
-            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
               <Settings size={20} />
             </button>
-            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors relative">
+            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors relative cursor-pointer">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
             </button>
