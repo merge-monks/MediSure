@@ -17,17 +17,29 @@ const ScanReports = () => {
   const [analysisResults, setAnalysisResults] = useState([]);
   const [analysisError, setAnalysisError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [patientName, setPatientName] = useState("");
+  const [scanType, setScanType] = useState("CT scan");
+  const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  const [predictions, setPredictions] = useState([]);
+  // Add state for custom alert modal
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
  
   const navigateToDash = () => {
     navigate('/Dashboard');
   }
+  
   const handleCancel = () => {
     // Clear selected files and reset states
     setSelectedFiles([]);
     setUploadStatus(null);
     setAnalysisResults([]);
     setAnalysisError(null);
+    setPatientName("");
+    setScanType("CT scan");
+    setAnalysisCompleted(false);
+    setPredictions([]);
   };
 
   const handleFileSelect = (e) => {
@@ -37,6 +49,8 @@ const ScanReports = () => {
       setUploadStatus(null);
       setAnalysisResults([]);
       setAnalysisError(null);
+      setAnalysisCompleted(false);
+      setPredictions([]);
     }
   };
 
@@ -47,12 +61,20 @@ const ScanReports = () => {
       return;
     }
 
+    if (!patientName.trim()) {
+      setUploadStatus('error');
+      setAnalysisError('Please enter patient name.');
+      return;
+    }
+
     setUploadStatus("uploading");
     setAnalysisResults([]);
     setAnalysisError(null);
     setProgress({ current: 0, total: selectedFiles.length });
+    setAnalysisCompleted(false);
     
     const results = [];
+    const extractedPredictions = [];
     
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
@@ -61,14 +83,15 @@ const ScanReports = () => {
       try {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("patientName", patientName);
+        formData.append("scanType", scanType);
 
         const response = await fetch("http://127.0.0.1:5000/predict", {
           method: "POST",
           body: formData,
-          // Explicitly set mode to cors
           mode: 'cors',
           headers: {
-            'Accept': 'image/png',
+            'Accept': 'application/json, image/png',
           },
         });
 
@@ -76,14 +99,39 @@ const ScanReports = () => {
           throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
 
-        // Get the blob from the response
-        const imageBlob = await response.blob();
-        const imageUrl = URL.createObjectURL(imageBlob);
+        // Get the prediction data from headers or JSON
+        let prediction = "Unknown";
+        const contentType = response.headers.get('Content-Type');
         
-        results.push({
-          fileName: file.name,
-          resultImage: imageUrl
-        });
+        if (contentType && contentType.includes('application/json')) {
+          const jsonData = await response.json();
+          prediction = jsonData.prediction || "Unknown";
+          
+          // Get the image URL if provided
+          const imageUrl = jsonData.image_url ? jsonData.image_url : null;
+          
+          results.push({
+            fileName: file.name,
+            resultImage: imageUrl,
+            prediction: prediction
+          });
+        } else {
+          // Get the blob from the response
+          const imageBlob = await response.blob();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          
+          // Get prediction from custom header if available
+          prediction = response.headers.get('X-Prediction') || "Unknown";
+          
+          results.push({
+            fileName: file.name,
+            resultImage: imageUrl,
+            prediction: prediction
+          });
+        }
+        
+        extractedPredictions.push(prediction);
+        
       } catch (error) {
         console.error(`Error analyzing image ${file.name}:`, error);
         results.push({
@@ -95,6 +143,7 @@ const ScanReports = () => {
     }
     
     setAnalysisResults(results);
+    setPredictions(extractedPredictions);
     
     // Check if any results had errors
     const hasErrors = results.some(result => result.isError);
@@ -103,11 +152,79 @@ const ScanReports = () => {
       setAnalysisError('Some files could not be analyzed. Check the results below.');
     } else {
       setUploadStatus('success');
+      setAnalysisCompleted(true);
     }
+  };
+
+  // Function to extract prediction from image title
+  const extractPredictionFromImage = async (imageUrl) => {
+    // For implementation simplicity, we'll return Unknown
+    // The real prediction will be extracted when the image loads in the UI
+    return "Unknown";
+  };
+
+  const handleSubmit = () => {
+    // Extract predictions from results
+    const tumorTypes = analysisResults
+      .filter(result => !result.isError)
+      .map(result => result.prediction || "Unknown");
+    
+    // Log patient data and predictions to console
+    console.log({
+      "Patient's Name": patientName,
+      "Scan Type": scanType,
+      "Predicted": tumorTypes.length > 0 ? tumorTypes : ["No predictions available"]
+    });
+    
+    // Show custom alert instead of using browser alert
+    setAlertMessage("Data submitted successfully!");
+    setShowAlert(true);
+  };
+
+  // Add function to clear the form after submission
+  const clearForm = () => {
+    setSelectedFiles([]);
+    setUploadStatus(null);
+    setAnalysisResults([]);
+    setAnalysisError(null);
+    setPatientName("");
+    setScanType("CT scan");
+    setAnalysisCompleted(false);
+    setPredictions([]);
+    setShowAlert(false);
   };
 
   const openFileExplorer = () => {
     fileInputRef.current.click();
+  };
+
+  // Display the appropriate button based on analysis status
+  const renderActionButton = () => {
+    if (analysisCompleted) {
+      return (
+        <button
+          onClick={handleSubmit}
+          className="px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer"
+        >
+          Submit
+        </button>
+      );
+    } else {
+      return (
+        <button
+          onClick={handleUpload}
+          disabled={uploadStatus === "uploading" || selectedFiles.length === 0}
+          className={`px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer
+            ${
+              uploadStatus === "uploading" || selectedFiles.length === 0
+                ? "opacity-70 cursor-not-allowed"
+                : ""
+            }`}
+        >
+          {uploadStatus === "uploading" ? "Analyzing..." : "Analyze Scans"}
+        </button>
+      );
+    }
   };
 
   return (
@@ -135,6 +252,38 @@ const ScanReports = () => {
             <p className="text-slate-500">
               Upload your medical scan images for AI analysis
             </p>
+          </div>
+
+          {/* Patient Information Form */}
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label htmlFor="patientName" className="text-sm font-medium text-slate-700 mb-1" required='true'>
+                Patient's Name
+              </label>
+              <input
+                id="patientName"
+                type="text"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                placeholder="Enter patient's full name"
+                className="border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                required
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="scanType" className="text-sm font-medium text-slate-700 mb-1">
+                Scan Type
+              </label>
+              <select
+                id="scanType"
+                value={scanType}
+                onChange={(e) => setScanType(e.target.value)}
+                className="border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
+              >
+                <option value="CT scan">CT scan</option>
+                <option value="MRI scan">MRI scan</option>
+              </select>
+            </div>
           </div>
 
           {/* File upload area */}
@@ -237,6 +386,11 @@ const ScanReports = () => {
                   <div key={index} className={`border rounded-lg overflow-hidden shadow-sm ${result.isError ? 'border-red-300' : ''}`}>
                     <div className={`p-3 ${result.isError ? 'bg-red-50' : 'bg-slate-50'} border-b`}>
                       <p className="font-medium text-slate-700 truncate">{result.fileName}</p>
+                      {!result.isError && (
+                        <p className="text-sm text-cyan-600">
+                          Tumor type: {result.prediction || "Analyzing..."}
+                        </p>
+                      )}
                     </div>
                     <div className="p-4 flex justify-center">
                       {result.isError ? (
@@ -249,11 +403,62 @@ const ScanReports = () => {
                           src={result.resultImage} 
                           alt={`Analysis result for ${result.fileName}`} 
                           className="max-w-full h-auto rounded"
+                          onLoad={(e) => {
+                            if (result.prediction && result.prediction !== "Unknown") {
+                              return;
+                            }
+                            
+                            const titleRegex = /Predicted: (\w+)/;
+                            
+                            const canvas = document.createElement('canvas');
+                            const img = e.target;
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            
+                             const title = img.parentElement?.textContent || '';
+                            const match = title.match(titleRegex);
+                            
+                            if (match && match[1]) {
+                              const predictedType = match[1];
+                              const newResults = [...analysisResults];
+                              if (newResults[index]) {
+                                newResults[index].prediction = predictedType;
+                                setAnalysisResults(newResults);
+                                
+                                const newPredictions = [...predictions];
+                                newPredictions[index] = predictedType;
+                                setPredictions(newPredictions);
+                              }
+                            }
+                          }}
                         />
                       )}
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Custom Alert Modal */}
+          {showAlert && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 animate-fade-in">
+                <div className="flex flex-col items-center text-center">
+                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <Check size={32} className="text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Success!</h3>
+                  <p className="text-slate-600 mb-6">{alertMessage}</p>
+                  <button
+                    onClick={clearForm}
+                    className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer w-full"
+                  >
+                    Continue
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -266,20 +471,7 @@ const ScanReports = () => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleUpload}
-              disabled={
-                uploadStatus === "uploading" || selectedFiles.length === 0
-              }
-              className={`px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer
-                ${
-                  uploadStatus === "uploading" || selectedFiles.length === 0
-                    ? "opacity-70 cursor-not-allowed"
-                    : ""
-                }`}
-            >
-              {uploadStatus === "uploading" ? "Analyzing..." : "Analyze Scans"}
-            </button>
+            {renderActionButton()}
           </div>
         </div>
       </div>

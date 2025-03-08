@@ -118,9 +118,14 @@ def predict_tumor():
         buf.seek(0)
         
         response = make_response(send_file(buf, mimetype='image/png'))
+        
+        # Add the prediction as a custom header
+        response.headers.add('X-Prediction', predicted_label)
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        # Add the custom header to the exposed headers
+        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
         
         # Clean up the file after processing
         if os.path.exists(file_path):
@@ -134,4 +139,4 @@ def predict_tumor():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

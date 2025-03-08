@@ -1,7 +1,7 @@
 import { configDotenv } from "dotenv";
 import authRoute from "./routes/auth.routes.js";
-import profileRoute from "./routes/profile.routes.js";
-import medicalRoute from "./routes/medical.routes.js";
+// import profileRoute from "./routes/profile.routes.js";
+// import medicalRoute from "./routes/medical.routes.js";
 import connectToMongoDB from "./db/connectToMongodb.js";
 import MongoStore from "connect-mongo";
 import session from "express-session";
@@ -42,8 +42,8 @@ app.use(
 );
 
 app.use("/api/auth", authRoute);
-app.use("/api/profile", profileRoute);
-app.use("/api/medications", medicalRoute);
+// app.use("/api/profile", profileRoute);
+// app.use("/api/medications", medicalRoute);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
