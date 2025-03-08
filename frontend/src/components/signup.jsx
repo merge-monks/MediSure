@@ -66,11 +66,9 @@ const Signup = () => {
       <div className="lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-16 bg-gradient-to-br from-cyan-600 to-blue-700 text-white">
         <div className="max-w-lg">
           <div className="flex items-center mb-8">
-            <div className="bg-white text-cyan-600 p-2 rounded-lg shadow-md">
-              <div className="h-6 w-6 flex items-center justify-center font-bold">
-                +
-              </div>
-            </div>
+          <div className="bg-white text-cyan-600 p-2 rounded-lg shadow-md flex items-center justify-center">
+            <div className="h-6 w-6 pb-2 text-3xl flex items-center justify-center font-extrabold leading-none m">+</div>
+          </div>
             <h1 className="ml-3 font-bold text-2xl tracking-tight">Medisure</h1>
           </div>
 

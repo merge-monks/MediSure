@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
+<<<<<<< HEAD
 import { Calendar, User, BarChart2, FileText, Users, Home, Settings, Bell, Search, 
   ChevronLeft, ChevronRight, Menu, X, Plus, Clock, PieChart, Activity, ArrowRight, 
   Calendar as CalendarIcon, Filter, TrendingUp, MessageSquare } from 'lucide-react';
+=======
+import { Calendar, User, BarChart2, FileText, Users, Home, Settings, Bell, Search, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+>>>>>>> 70b8c6d607c1c1fb3033d2b9f3a6918571d4ca1c
 
 const MedisureDashboard = () => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(7);
   const [currentMonth, setCurrentMonth] = useState('January 2023');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
+  // Navigation functions
+  const navigateToScanReports = () => {
+    navigate('/ScanReports');
+  };
+
   // Calendar data
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const dates = [
@@ -172,6 +183,7 @@ const MedisureDashboard = () => {
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
           </div>
           
+<<<<<<< HEAD
           <div className="flex items-center space-x-4">
             <button className="flex items-center bg-cyan-500 to-blue-500 text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
               <Plus size={18} className="mr-2" />
@@ -185,6 +197,24 @@ const MedisureDashboard = () => {
             </div>
             <div className="flex items-center ml-2 bg-gradient-to-r from-slate-50 to-cyan-50 p-1.5 rounded-xl shadow-sm">
               <div className="bg-cyan-600 to-blue-600 text-white rounded-lg w-9 h-9 flex items-center justify-center">
+=======
+          <div className="flex items-center space-x-3">
+            <button 
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={navigateToScanReports}
+            >
+              Scan Reports
+            </button>
+            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+              <Settings size={20} />
+            </button>
+            <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors relative cursor-pointer">
+              <Bell size={20} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
+            </button>
+            <div className="flex items-center ml-4 bg-gradient-to-r from-slate-50 to-cyan-50 p-1.5 rounded-xl shadow-sm">
+              <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-lg w-9 h-9 flex items-center justify-center">
+>>>>>>> 70b8c6d607c1c1fb3033d2b9f3a6918571d4ca1c
                 <span className="text-xs font-bold">DK</span>
               </div>
               <div className="ml-3">
