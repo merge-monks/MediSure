@@ -117,7 +117,7 @@ const Signup = () => {
               <div>
                 <h3 className="font-medium mb-1">AI-Powered Analysis</h3>
                 <p className="text-cyan-100 text-sm">
-                  Advanced algorithms to help with diagnosis and patient care
+                Deep learning-driven image analysis for accurate and efficient medical diagnoses
                 </p>
               </div>
             </div>
