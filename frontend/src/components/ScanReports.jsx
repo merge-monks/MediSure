@@ -7,8 +7,9 @@ const ScanReports = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null); // null, 'uploading', 'success', 'error'
   const fileInputRef = useRef(null);
+  const [analysisResults, setAnalysisResults] = useState([]);
+  const [analysisError, setAnalysisError] = useState(null);
 
-  // Navigation functions
   const navigateToHome = () => {
     navigate('/');
   };
@@ -18,23 +19,53 @@ const ScanReports = () => {
     if (files.length > 0) {
       setSelectedFiles(files);
       setUploadStatus(null);
+      setAnalysisResults([]);
+      setAnalysisError(null);
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       setUploadStatus('error');
       return;
     }
 
     setUploadStatus('uploading');
-
-    // Simulate upload process
-    setTimeout(() => {
+    setAnalysisResults([]);
+    setAnalysisError(null);
+    
+    try {
+      const uploadPromises = selectedFiles.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+        
+        // Get the blob from the response
+        const imageBlob = await response.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
+        
+        return {
+          fileName: file.name,
+          resultImage: imageUrl
+        };
+      });
+      
+      const results = await Promise.all(uploadPromises);
+      setAnalysisResults(results);
       setUploadStatus('success');
-      // Here you would normally send files to your backend
-      // using FormData and fetch or axios
-    }, 2000);
+    } catch (error) {
+      console.error('Error analyzing images:', error);
+      setAnalysisError(error.message);
+      setUploadStatus('error');
+    }
   };
 
   const openFileExplorer = () => {
@@ -122,10 +153,33 @@ const ScanReports = () => {
               {uploadStatus === 'error' && <AlertCircle size={18} className="mr-2" />}
               
               <span className="text-sm font-medium">
-                {uploadStatus === 'uploading' && 'Uploading files...'}
-                {uploadStatus === 'success' && 'Files uploaded successfully!'}
-                {uploadStatus === 'error' && 'Please select files to upload.'}
+                {uploadStatus === 'uploading' && 'Analyzing images...'}
+                {uploadStatus === 'success' && 'Analysis completed successfully!'}
+                {uploadStatus === 'error' && analysisError ? `Error: ${analysisError}` : 'Please select files to upload.'}
               </span>
+            </div>
+          )}
+
+          {/* Analysis Results Section */}
+          {analysisResults.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-bold text-lg text-slate-700 mb-4">Analysis Results</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {analysisResults.map((result, index) => (
+                  <div key={index} className="border rounded-lg overflow-hidden shadow-sm">
+                    <div className="p-3 bg-slate-50 border-b">
+                      <p className="font-medium text-slate-700 truncate">{result.fileName}</p>
+                    </div>
+                    <div className="p-4 flex justify-center">
+                      <img 
+                        src={result.resultImage} 
+                        alt={`Analysis result for ${result.fileName}`} 
+                        className="max-w-full h-auto rounded"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -139,11 +193,11 @@ const ScanReports = () => {
             </button>
             <button
               onClick={handleUpload}
-              disabled={uploadStatus === 'uploading'}
+              disabled={uploadStatus === 'uploading' || selectedFiles.length === 0}
               className={`px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all cursor-pointer
-                ${uploadStatus === 'uploading' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                ${(uploadStatus === 'uploading' || selectedFiles.length === 0) ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {uploadStatus === 'uploading' ? 'Uploading...' : 'Analyze Scans'}
+              {uploadStatus === 'uploading' ? 'Analyzing...' : 'Analyze Scans'}
             </button>
           </div>
         </div>
