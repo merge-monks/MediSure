@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { signupUser } from '../services/authService';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,17 +15,27 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
     
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Add your signup logic here
-      console.log('Signup data:', formData);
+      const response = await signupUser({
+        email: formData.email,
+        password: formData.password
+      });
+      console.log('Signup successful:', response);
       navigate('/login');
     } catch (err) {
-      setError('Failed to create account');
+      setError(err.message || 'Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -49,16 +60,6 @@ const Signup = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              className="w-full px-3 py-2 border rounded"
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <input
               type="email"
               name="email"
               placeholder="Email"
@@ -77,12 +78,22 @@ const Signup = () => {
               required
             />
           </div>
+          <div className="mb-4">
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              className="w-full px-3 py-2 border rounded"
+              onChange={handleChange}
+              required
+            />
+          </div>
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
             disabled={isLoading}
           >
-            {isLoading ? 'Creating Account...' : 'Sign Up'}
+            {isLoading ? 'Loading...' : 'Sign Up'}
           </button>
         </form>
         <p className="mt-4 text-center">

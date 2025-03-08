@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { loginUser } from '../services/authService';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -16,11 +17,8 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Add your login logic here
-      console.log('Login data:', formData);
+      const response = await loginUser(formData);
+      console.log('Login successful:', response);
       navigate('/home');
     } catch (err) {
       setError('Invalid email or password');
