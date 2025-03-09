@@ -1,7 +1,7 @@
 import { configDotenv } from "dotenv";
 import authRoute from "./routes/auth.routes.js";
 import medicalRoute from "./routes/medical.routes.js";
-// import profileRoute from "./routes/profile.routes.js";
+
 import connectToMongoDB from "./db/connectToMongodb.js";
 import MongoStore from "connect-mongo";
 import session from "express-session";
@@ -10,8 +10,10 @@ import express from "express";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import { Client } from "whatsapp-web.js";
+import { Client } from 'whatsapp-web.js';
 import qrcode from "qrcode-terminal";
+
+const clientWhatsapp = new Client();
 
 clientWhatsapp.on("qr", (qr) => {
   qrcode.generate(qr, { small: true });
