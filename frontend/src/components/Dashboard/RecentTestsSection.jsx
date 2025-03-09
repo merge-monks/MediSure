@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Activity, PieChart, TrendingUp, ArrowRight, Loader } from "lucide-react";
+import { Activity, PieChart, TrendingUp, ArrowRight, Loader, Send } from "lucide-react";
 import { getMedicalReports } from "../../services/apiService";
 import { useNavigate } from "react-router-dom";
 
@@ -40,7 +40,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
     navigate("/all-tests");
   };
 
-
+ ;
 
   if (loading) {
     return (
@@ -106,7 +106,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                   </p>
                 </div>
                 
-                <div className="bg-slate-50 p-3 rounded-lg">
+                <div className="bg-slate-50 p-3 rounded-lg mb-3">
                   <p className="text-sm text-slate-700 font-medium">Findings:</p>
                   <div className="text-sm text-slate-600 mt-1">
                     {Array.isArray(test.predictions) ? (
@@ -122,8 +122,21 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                     )}
                   </div>
                 </div>
+                <button
+                  
+                  className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Send size={16} onClick={() => {
+                    fetch("/api/medical/sendMessage",{
+                      method:"POST",
+                      headers: {"content-type": "application/json"},
+                      body: JSON.stringify({name: patientName ,number:phoneNumber , scanType: scanType,imageUrl:selectedFiles.map(file => file.name) })
+                    })
+                  }}/>
+                  Send Report
+                </button>
               </div>
-            </div>
+            </div> 
           ))
         ) : (
           <div className="col-span-full text-center py-8 text-slate-500">

@@ -140,11 +140,17 @@ export const login = async (req, res) => {
 
   const { email, password } = req.body;
 
+  console.log(email + " " + password);
+
   if (!email || !password) {
     return res.status(400).json({ error: "Please fill all the fields" });
   }
 
   const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(400).json({ error: "Incorrect username or password"});
+  }
 
   const isPasswordCorrect = await bcrypt.compare(
     password,
@@ -170,4 +176,17 @@ export const logout = async (req, res) => {
     res.clearCookie("AuthCookie");
     res.json({ result: "Logout successful" });
   });
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error in getCurrentUser:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };

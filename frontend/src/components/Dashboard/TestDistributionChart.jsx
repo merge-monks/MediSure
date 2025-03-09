@@ -106,7 +106,6 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
                 Total Tests
               </p>
               <p className="text-2xl font-bold text-slate-800">{totalTests}</p>
-              <p className="text-xs text-cyan-600">+8% from last month</p>
             </div>
           </div>
 

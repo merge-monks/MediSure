@@ -31,116 +31,116 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    // Enhanced console logging for dev tools
-    console.group('Medisure Signup Attempt');
-    console.log('📝 Form Data:', formData);
-    console.log('👤 User Details:', {
-      name: `${formData.firstName} ${formData.lastName}`,
-      professional: {
-        title: formData.title,
-        specialty: formData.specialty,
-        licenseNumber: formData.licenseNumber,
-        npiNumber: formData.npiNumber,
-        state: formData.state
-      },
-      practice: {
-        name: formData.practiceName,
-        type: formData.practiceType,
-        ehr: formData.ehr
-      },
-      account: {
-        email: formData.email,
-        passwordLength: formData.password ? formData.password.length : 0,
-        passwordsMatch: formData.password === formData.confirmPassword
-      },
-      consents: {
-        hipaa: formData.hipaaConsent,
-        terms: formData.termsConsent
-      }
-    });
-    console.groupEnd();
-
-    // Comprehensive validation
-    if (!formData.firstName || !formData.lastName) {
-      setError("First name and last name are required");
-      return;
-    }
-
-    if (!formData.title) {
-      setError("Professional title is required");
-      return;
-    }
-
-    if (!formData.specialty) {
-      setError("Specialty is required");
-      return;
-    }
-
-    if (!formData.licenseNumber) {
-      setError("Medical license number is required");
-      return;
-    }
-
-    if (!formData.npiNumber) {
-      setError("NPI number is required");
-      return;
-    }
-
-    if (!formData.state) {
-      setError("State/Jurisdiction is required");
-      return;
-    }
-
-    if (!formData.practiceName) {
-      setError("Practice/Hospital name is required");
-      return;
-    }
-
-    if (!formData.practiceType) {
-      setError("Practice type is required");
-      return;
-    }
-
-    if (!formData.email) {
-      setError("Email address is required");
-      return;
-    }
-
-    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return;
-    }
-
-    // Password strength validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
-    if (!passwordRegex.test(formData.password)) {
-      setError("Password must include uppercase, lowercase, numbers, and special characters");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (!formData.hipaaConsent) {
-      setError("You must agree to HIPAA compliance terms");
-      return;
-    }
-
-    if (!formData.termsConsent) {
-      setError("You must agree to Terms of Service and Privacy Policy");
-      return;
-    }
-
     setIsLoading(true);
+
     try {
+      // Enhanced console logging for dev tools
+      console.group('Medisure Signup Attempt');
+      console.log('📝 Form Data:', formData);
+      console.log('👤 User Details:', {
+        name: `${formData.firstName} ${formData.lastName}`,
+        professional: {
+          title: formData.title,
+          specialty: formData.specialty,
+          licenseNumber: formData.licenseNumber,
+          npiNumber: formData.npiNumber,
+          state: formData.state
+        },
+        practice: {
+          name: formData.practiceName,
+          type: formData.practiceType,
+          ehr: formData.ehr
+        },
+        account: {
+          email: formData.email,
+          passwordLength: formData.password ? formData.password.length : 0,
+          passwordsMatch: formData.password === formData.confirmPassword
+        },
+        consents: {
+          hipaa: formData.hipaaConsent,
+          terms: formData.termsConsent
+        }
+      });
+      console.groupEnd();
+
+      // Comprehensive validation
+      if (!formData.firstName || !formData.lastName) {
+        setError("First name and last name are required");
+        return;
+      }
+
+      if (!formData.title) {
+        setError("Professional title is required");
+        return;
+      }
+
+      if (!formData.specialty) {
+        setError("Specialty is required");
+        return;
+      }
+
+      if (!formData.licenseNumber) {
+        setError("Medical license number is required");
+        return;
+      }
+
+      if (!formData.npiNumber) {
+        setError("NPI number is required");
+        return;
+      }
+
+      if (!formData.state) {
+        setError("State/Jurisdiction is required");
+        return;
+      }
+
+      if (!formData.practiceName) {
+        setError("Practice/Hospital name is required");
+        return;
+      }
+
+      if (!formData.practiceType) {
+        setError("Practice type is required");
+        return;
+      }
+
+      if (!formData.email) {
+        setError("Email address is required");
+        return;
+      }
+
+      if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        setError("Please enter a valid email address");
+        return;
+      }
+
+      if (formData.password.length < 8) {
+        setError("Password must be at least 8 characters long");
+        return;
+      }
+
+      // Password strength validation
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+      if (!passwordRegex.test(formData.password)) {
+        setError("Password must include uppercase, lowercase, numbers, and special characters");
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      if (!formData.hipaaConsent) {
+        setError("You must agree to HIPAA compliance terms");
+        return;
+      }
+
+      if (!formData.termsConsent) {
+        setError("You must agree to Terms of Service and Privacy Policy");
+        return;
+      }
+
       const result = await signupUser({
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -158,11 +158,25 @@ const Signup = () => {
         termsConsent: formData.termsConsent,
         hipaaConsent: formData.hipaaConsent
       });
+
       console.log("Signup successful:", result);
-      navigate("/login");
+      // Show success message before navigation
+      const timer = setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+      return () => clearTimeout(timer);
     } catch (err) {
       console.error("Signup error:", err);
-      setError(err.message || "Signup failed. Please try again.");
+      // Handle specific error messages
+      if (err.message.includes('Network error')) {
+        setError('Unable to connect to the server. Please check your internet connection.');
+      } else if (err.message.includes('already exists')) {
+        setError('An account with this email already exists.');
+      } else if (err.message.includes('Server error')) {
+        setError('We are experiencing technical difficulties. Please try again later.');
+      } else {
+        setError(err.message || 'Failed to create account. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

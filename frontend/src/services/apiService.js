@@ -1,5 +1,5 @@
 // Base API URL configuration
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = '/api';
 
 // Medical API endpoints
 export const getMedicalReports = async () => {

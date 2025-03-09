@@ -44,6 +44,11 @@ const ScanReports = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [serverStatus, setServerStatus] = useState(null); // null = unknown, true = online, false = offline
+  const [phoneNumber, setPhoneNumber] = useState(""); // Add this line
+  const [formErrors, setFormErrors] = useState({
+    patientName: '',
+    phoneNumber: ''
+  });
 
   // Check API server status on component mount
   useEffect(() => {
@@ -69,6 +74,7 @@ const ScanReports = () => {
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
+    setPhoneNumber(""); // Add this line
     setScanType("Brain Tumor Scan");
     setAnalysisCompleted(false);
     setPredictions([]);
@@ -100,7 +106,43 @@ const ScanReports = () => {
     console.log(`Endpoint will be: ${endpoint}`);
   };
 
+  const validatePatientName = (name) => {
+    if (!name.trim()) {
+      return "Patient name is required";
+    }
+    if (!/^[a-zA-Z\s]{2,50}$/.test(name.trim())) {
+      return "Name should only contain letters and be 2-50 characters long";
+    }
+    return "";
+  };
+
+  const validatePhoneNumber = (phone) => {
+    if (!phone.trim()) {
+      return "Phone number is required";
+    }
+    // Regex for phone number: +91 followed by 10 digits or just 10 digits
+    if (!/^(\+91[\-\s]?)?[0]?(91)?[789]\d{9}$/.test(phone.trim())) {
+      return "Please enter a valid Indian phone number";
+    }
+    return "";
+  };
+
   const handleUpload = async (filesToProcess = selectedFiles) => {
+    // Validate all fields
+    const nameError = validatePatientName(patientName);
+    const phoneError = validatePhoneNumber(phoneNumber);
+
+    setFormErrors({
+      patientName: nameError,
+      phoneNumber: phoneError
+    });
+
+    if (nameError || phoneError) {
+      setUploadStatus('error');
+      setAnalysisError('Please fix the errors in the form.');
+      return;
+    }
+
     if (filesToProcess.length === 0) {
       setUploadStatus('error');
       setAnalysisError('Please select files to upload.');
@@ -215,11 +257,11 @@ const ScanReports = () => {
       .filter(result => !result.isError)
       .map(result => result.prediction || "No tumor");
     
-    // Add additional logging to verify predictions
     console.log("Tumor predictions being saved:", tumorTypes);
     
     const reportData = {
       patientName,
+      phoneNumber,
       scanType,
       predictions: tumorTypes,
       images: selectedFiles.map(file => file.name) 
@@ -227,43 +269,29 @@ const ScanReports = () => {
     
     console.log("Submitting report with data:", reportData);
     
-    // Set uploading state
     setUploadStatus("uploading");
     
     try {
-      // First check if the server is reachable
-      const serverCheck = await fetch("http://localhost:4000/api/health", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        // Add a timeout
-        signal: AbortSignal.timeout(5000)
-      }).catch(err => {
-        console.warn("Health check failed, proceeding with submission anyway:", err);
-        return { ok: false };
-      });
-      
-      // If server health check fails, log but continue with submission attempt
-      if (!serverCheck.ok) {
-        console.warn("Server health check failed, attempting submission anyway");
-      }
-      
-      const response = await fetch("http://localhost:4000/api/medical/scanReports", {
+      const response = await fetch("/api/medical/scanReports", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "application/json",
+          // Remove credentials if the backend doesn't support them
+          // "Access-Control-Allow-Origin": "*"  // This should be set on the server side
         },
-        body: JSON.stringify(reportData),
-        credentials: 'include'
+        // Only include credentials if the backend is configured to accept them
+        // credentials: 'include',
+        mode: 'cors', // Explicitly set CORS mode
+        body: JSON.stringify(reportData)
       });
-      
-      // Log response status for debugging
-      console.log("Response status:", response.status);
-      
+  
       if (!response.ok) {
+        // Check specifically for CORS errors
+        if (response.status === 0) {
+          throw new Error("Network error - This might be due to CORS restrictions. Please check server configuration.");
+        }
+        
         const errorText = await response.text();
         let errorData;
         try {
@@ -273,8 +301,9 @@ const ScanReports = () => {
         }
         throw new Error(errorData.message || "Failed to save report");
       }
-      
-      // Try parsing JSON but handle cases where response isn't JSON
+  
+      // Rest of the success handling
+      // ...existing code...
       let data;
       const responseText = await response.text();
       try {
@@ -289,11 +318,16 @@ const ScanReports = () => {
       setUploadStatus("success");
       setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! ${data.reportId ? `Report ID: ${data.reportId}` : ""}`);
       setShowAlert(true);
+  
     } catch (error) {
       console.error("Error saving report:", error);
       setUploadStatus("error");
-      setAnalysisError(error.message || "Failed to submit report to database");
-      setAlertMessage(`Error: ${error.message || "Failed to save data"}. Please try again.`);
+      // Provide more specific error message for CORS issues
+      const errorMessage = error.message.includes("CORS")
+        ? "Unable to connect to server due to CORS restrictions. Please contact administrator."
+        : error.message || "Failed to submit report to database";
+      setAnalysisError(errorMessage);
+      setAlertMessage(`Error: ${errorMessage}. Please try again.`);
       setShowAlert(true);
     }
   };
@@ -320,6 +354,24 @@ const ScanReports = () => {
 
   const openFileExplorer = () => {
     fileInputRef.current.click();
+  };
+
+  const handlePhoneNumberChange = (e) => {
+    const value = e.target.value;
+    setPhoneNumber(value);
+    setFormErrors(prev => ({
+      ...prev,
+      phoneNumber: validatePhoneNumber(value)
+    }));
+  };
+
+  const handlePatientNameChange = (e) => {
+    const value = e.target.value;
+    setPatientName(value);
+    setFormErrors(prev => ({
+      ...prev,
+      patientName: validatePatientName(value)
+    }));
   };
 
   // Display the appropriate button based on analysis status
@@ -390,11 +442,30 @@ const ScanReports = () => {
                 id="patientName"
                 type="text"
                 value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
+                onChange={handlePatientNameChange}
                 placeholder="Enter patient's full name"
-                className="border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className={`border ${formErrors.patientName ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500`}
                 required
               />
+              {formErrors.patientName && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.patientName}</p>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="phoneNumber" className="text-sm font-medium text-slate-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
+                placeholder="Enter phone number"
+                className={`border ${formErrors.phoneNumber ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500`}
+              />
+              {formErrors.phoneNumber && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.phoneNumber}</p>
+              )}
             </div>
             <div className="flex flex-col">
               <label htmlFor="scanType" className="text-sm font-medium text-slate-700 mb-1">
