@@ -56,7 +56,6 @@ const MedisureDashboard = () => {
               return {
                 ...item,
                 value: totalTests.toString(), // Use all tests count for demonstration
-                trend: "+15%",
               };
             }
             return item;

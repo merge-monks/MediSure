@@ -23,13 +23,13 @@ const Header = ({ navigateToScanReports }) => {
         </button>
         <div className="relative">
           <button className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors relative">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+            {/* <Bell size={20} /> */}
+            {/* <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span> */}
           </button>
         </div>
         <div className="flex items-center ml-2 bg-gradient-to-r from-slate-50 to-cyan-50 p-1.5 rounded-xl shadow-sm">
           <div className="bg-cyan-600 to-blue-600 text-white rounded-lg w-9 h-9 flex items-center justify-center">
-            <span className="text-xs font-bold">DK</span>
+            <span className="text-xs font-bold">MK</span>
           </div>
           <div className="ml-3">
             <span className="text-sm font-medium text-slate-700 block leading-tight">
