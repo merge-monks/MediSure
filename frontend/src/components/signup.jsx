@@ -5,14 +5,25 @@ import { CheckCircle, User, Lock, Eye, EyeOff } from "lucide-react";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    title: "",
+    specialty: "",
+    licenseNumber: "",
+    npiNumber: "",
+    state: "",
+    practiceName: "",
+    practiceType: "",
+    ehr: "",
     displayName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    hipaaConsent: false,
+    termsConsent: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -21,28 +32,131 @@ const Signup = () => {
     e.preventDefault();
     setError("");
 
+    // Enhanced console logging for dev tools
+    console.group('Medisure Signup Attempt');
+    console.log('📝 Form Data:', formData);
+    console.log('👤 User Details:', {
+      name: `${formData.firstName} ${formData.lastName}`,
+      professional: {
+        title: formData.title,
+        specialty: formData.specialty,
+        licenseNumber: formData.licenseNumber,
+        npiNumber: formData.npiNumber,
+        state: formData.state
+      },
+      practice: {
+        name: formData.practiceName,
+        type: formData.practiceType,
+        ehr: formData.ehr
+      },
+      account: {
+        email: formData.email,
+        passwordLength: formData.password ? formData.password.length : 0,
+        passwordsMatch: formData.password === formData.confirmPassword
+      },
+      consents: {
+        hipaa: formData.hipaaConsent,
+        terms: formData.termsConsent
+      }
+    });
+    console.groupEnd();
+
+    // Comprehensive validation
+    if (!formData.firstName || !formData.lastName) {
+      setError("First name and last name are required");
+      return;
+    }
+
+    if (!formData.title) {
+      setError("Professional title is required");
+      return;
+    }
+
+    if (!formData.specialty) {
+      setError("Specialty is required");
+      return;
+    }
+
+    if (!formData.licenseNumber) {
+      setError("Medical license number is required");
+      return;
+    }
+
+    if (!formData.npiNumber) {
+      setError("NPI number is required");
+      return;
+    }
+
+    if (!formData.state) {
+      setError("State/Jurisdiction is required");
+      return;
+    }
+
+    if (!formData.practiceName) {
+      setError("Practice/Hospital name is required");
+      return;
+    }
+
+    if (!formData.practiceType) {
+      setError("Practice type is required");
+      return;
+    }
+
+    if (!formData.email) {
+      setError("Email address is required");
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    if (!passwordRegex.test(formData.password)) {
+      setError("Password must include uppercase, lowercase, numbers, and special characters");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    if (formData.password.length < 5) {
-      setError("Password must be at least 5 characters long");
+    if (!formData.hipaaConsent) {
+      setError("You must agree to HIPAA compliance terms");
       return;
     }
 
-    if (formData.displayName.length < 5) {
-      setError("Name should be greater than 4 letters");
+    if (!formData.termsConsent) {
+      setError("You must agree to Terms of Service and Privacy Policy");
       return;
     }
 
     setIsLoading(true);
     try {
       const result = await signupUser({
-        displayName: formData.displayName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
+        title: formData.title,
+        specialty: formData.specialty,
+        licenseNumber: formData.licenseNumber,
+        npiNumber: formData.npiNumber,
+        state: formData.state,
+        practiceName: formData.practiceName,
+        practiceType: formData.practiceType,
+        ehr: formData.ehr,
+        termsConsent: formData.termsConsent,
+        hipaaConsent: formData.hipaaConsent
       });
       console.log("Signup successful:", result);
       navigate("/login");
@@ -55,9 +169,10 @@ const Signup = () => {
   };
 
   const handleChange = (e) => {
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     });
   };
 
@@ -520,27 +635,11 @@ const Signup = () => {
                   </div>
 
                   <div className="mt-2">
-                    <div className="flex items-center">
-                      <button
-                        type="button"
-                        className={`flex items-center justify-center w-5 h-5 rounded mr-2 transition-all focus:outline-none ${
-                          rememberMe
-                            ? "bg-gradient-to-r from-cyan-500 to-blue-500"
-                            : "border border-slate-300 bg-white"
-                        }`}
-                        onClick={() => setRememberMe(!rememberMe)}
-                      >
-                        {rememberMe && (
-                          <CheckCircle size={12} className="text-white" />
-                        )}
-                      </button>
-                      <label
-                        htmlFor="remember-me"
-                        className="text-sm text-slate-600"
-                      >
-                        Remember me for 30 days
-                      </label>
-                    </div>
+                    {error && (
+                      <div className="text-red-500 text-sm font-medium py-2 px-3 bg-red-50 border border-red-200 rounded-lg">
+                        {error}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-start mt-4">
@@ -549,6 +648,8 @@ const Signup = () => {
                         id="hipaaConsent"
                         name="hipaaConsent"
                         type="checkbox"
+                        checked={formData.hipaaConsent}
+                        onChange={handleChange}
                         required
                         className="focus:ring-cyan-500 h-4 w-4 text-cyan-600 border-slate-300 rounded"
                       />
@@ -571,6 +672,8 @@ const Signup = () => {
                         id="termsConsent"
                         name="termsConsent"
                         type="checkbox"
+                        checked={formData.termsConsent}
+                        onChange={handleChange}
                         required
                         className="focus:ring-cyan-500 h-4 w-4 text-cyan-600 border-slate-300 rounded"
                       />
@@ -601,7 +704,7 @@ const Signup = () => {
                 <p className="text-sm text-slate-600">
                   Already have an account?{" "}
                   <a
-                    href="#"
+                    href="/login"
                     className="font-medium text-cyan-600 hover:text-cyan-700"
                   >
                     Sign in

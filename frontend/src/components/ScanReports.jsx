@@ -83,6 +83,9 @@ const ScanReports = () => {
       setAnalysisError(null);
       setAnalysisCompleted(false);
       setPredictions([]);
+      
+      // Automatically start processing images when files are selected
+      handleUpload(files);
     }
   };
 
@@ -90,15 +93,15 @@ const ScanReports = () => {
   const handleScanTypeChange = (e) => {
     const newScanType = e.target.value;
     setScanType(newScanType);
-    const endpoint = newScanType === "bone tissue" 
+    const endpoint = newScanType === "Bone Tissue Scan" 
       ? "http://127.0.0.1:5000/predict_bone_route"
       : "http://127.0.0.1:5000/predict";
     console.log(`Scan type changed to: ${newScanType}`);
     console.log(`Endpoint will be: ${endpoint}`);
   };
 
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
+  const handleUpload = async (filesToProcess = selectedFiles) => {
+    if (filesToProcess.length === 0) {
       setUploadStatus('error');
       setAnalysisError('Please select files to upload.');
       return;
@@ -113,29 +116,36 @@ const ScanReports = () => {
     setUploadStatus("uploading");
     setAnalysisResults([]);
     setAnalysisError(null);
-    setProgress({ current: 0, total: selectedFiles.length });
+    setProgress({ current: 0, total: filesToProcess.length });
     setAnalysisCompleted(false);
     
     const results = [];
     const extractedPredictions = [];
     
     // Determine which endpoint to use based on scan type
-    const endpoint = scanType.toLowerCase().includes("bone") 
+    const endpoint = scanType === "Bone Tissue Scan" 
       ? "http://127.0.0.1:5000/predict_bone_route"
       : "http://127.0.0.1:5000/predict";
     
-    console.log(`Processing ${selectedFiles.length} files with scan type: ${scanType}`);
+    console.log(`Processing ${filesToProcess.length} files with scan type: ${scanType}`);
     console.log(`Using endpoint: ${endpoint}`);
     
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      setProgress({ current: i + 1, total: selectedFiles.length });
+    // Process images sequentially
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i];
+      setProgress({ current: i + 1, total: filesToProcess.length });
       
       try {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("patientName", patientName);
         formData.append("scanType", scanType);
+
+        // Update UI to show which file is currently being processed
+        setAnalysisResults([...results, {
+          fileName: file.name,
+          processing: true,
+        }]);
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -158,24 +168,33 @@ const ScanReports = () => {
         const imageBlob = await response.blob();
         const imageUrl = URL.createObjectURL(imageBlob);
         
-        results.push({
+        const resultItem = {
           fileName: file.name,
           resultImage: imageUrl,
           prediction: prediction
-        });
+        };
         
+        results.push(resultItem);
         extractedPredictions.push(prediction);
+        
+        // Update UI after each file completes
+        setAnalysisResults([...results]);
         
       } catch (error) {
         console.error(`Error analyzing image ${file.name}:`, error);
-        results.push({
+        const errorResult = {
           fileName: file.name,
           error: error.message,
           isError: true
-        });
+        };
+        results.push(errorResult);
+        
+        // Update UI after each file errors
+        setAnalysisResults([...results]);
       }
     }
     
+    // Final update with all results
     setAnalysisResults(results);
     setPredictions(extractedPredictions);
     
@@ -490,9 +509,14 @@ const ScanReports = () => {
                   <div key={index} className={`border rounded-lg overflow-hidden shadow-sm ${result.isError ? 'border-red-300' : ''}`}>
                     <div className={`p-3 ${result.isError ? 'bg-red-50' : 'bg-slate-50'} border-b`}>
                       <p className="font-medium text-slate-700 truncate">{result.fileName}</p>
-                      {!result.isError && (
+                      {!result.isError && !result.processing && (
                         <p className="text-sm font-medium text-cyan-600">
                           Tumor type: <span className="bg-cyan-100 px-2 py-0.5 rounded-full">{result.prediction || "Unknown"}</span>
+                        </p>
+                      )}
+                      {result.processing && (
+                        <p className="text-sm font-medium text-amber-600">
+                          Processing...
                         </p>
                       )}
                     </div>
@@ -501,6 +525,11 @@ const ScanReports = () => {
                         <div className="flex flex-col items-center text-red-500 p-4">
                           <AlertCircle size={48} className="mb-2" />
                           <p className="text-center">{result.error}</p>
+                        </div>
+                      ) : result.processing ? (
+                        <div className="flex flex-col items-center text-amber-500 p-4">
+                          <div className="animate-spin h-10 w-10 border-4 border-amber-500 border-t-transparent rounded-full mb-2"></div>
+                          <p className="text-center">Analyzing image...</p>
                         </div>
                       ) : (
                         <img
