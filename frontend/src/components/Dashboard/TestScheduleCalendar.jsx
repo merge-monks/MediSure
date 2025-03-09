@@ -1,88 +1,179 @@
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ArrowRight, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar as CalendarIcon, ArrowRight, Loader } from "lucide-react";
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { getMedicalReports } from "../../services/apiService";
 
-const TestScheduleCalendar = ({ testEntries }) => {
-  const [selectedDate, setSelectedDate] = useState(7);
-  const [currentMonth, setCurrentMonth] = useState("January 2023");
+const TestScheduleCalendar = () => {
+  // Initialize with today's date
+  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState(today);
   const [activeTab, setActiveTab] = useState("all");
+  const [allTests, setAllTests] = useState([]);
+  const [filteredTests, setFilteredTests] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Calendar data
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dates = [
-    [29, 30, 31, 1, 2, 3, 4],
-    [5, 6, 7, 8, 9, 10, 11],
-    [12, 13, 14, 15, 16, 17, 18],
-    [19, 20, 21, 22, 23, 24, 25],
-    [26, 27, 28, 29, 30, 1, 2],
-  ];
+  // Function to filter tests by date
+  const filterTestsByDate = (date, testsData) => {
+    if (!testsData || testsData.length === 0) {
+      return [];
+    }
+
+    // Format selected date as YYYY-MM-DD for comparison
+    const formattedDate = date.toISOString().split('T')[0];
+    
+    // Filter tests for the selected date
+    const testsForDate = testsData.filter(test => {
+      // Check if test has a date property and convert it to YYYY-MM-DD format
+      if (test.date) {
+        // Handle different date formats
+        let testDate;
+        if (test.date.includes('-')) {
+          // If already in YYYY-MM-DD format
+          testDate = test.date;
+        } else {
+          // If in format like "Jan 12, 2023"
+          testDate = new Date(test.date).toISOString().split('T')[0];
+        }
+        
+        // Filter by date and tab selection
+        return (testDate === formattedDate) && 
+               (activeTab === "all" || (activeTab === "pending" && test.status?.toLowerCase() !== "completed"));
+      }
+      return false;
+    });
+    
+    // Map to the format needed for display
+    return testsForDate.map((test, index) => ({
+      id: test.id || index + 1,
+      type: test.name || test.scanType || "SCAN",
+      patient: test.patient || "Unknown Patient",
+      status: test.status || "scheduled",
+      color: getStatusColor(test.status),
+    }));
+  };
+
+  // Fetch all tests when component mounts
+  useEffect(() => {
+    const fetchTests = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getMedicalReports();
+        if (data.success && data.reports) {
+          setAllTests(data.reports);
+          
+          // Immediately filter for today's tests
+          const todaysTests = filterTestsByDate(today, data.reports);
+          setFilteredTests(todaysTests);
+        }
+      } catch (error) {
+        console.error("Error fetching tests:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTests();
+  }, []);
+
+  // Function to handle date change
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    
+    // Filter tests for the newly selected date
+    const testsForSelectedDate = filterTestsByDate(date, allTests);
+    setFilteredTests(testsForSelectedDate);
+  };
+
+  // Re-filter tests when tab changes
+  useEffect(() => {
+    // Re-filter with current selected date when tab changes
+    const testsForSelectedDate = filterTestsByDate(selectedDate, allTests);
+    setFilteredTests(testsForSelectedDate);
+  }, [activeTab]);
+
+  // Helper function to determine color based on status
+  const getStatusColor = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'completed':
+        return "bg-emerald-500";
+      case 'in-progress':
+        return "bg-amber-500";
+      case 'scheduled':
+      default:
+        return "bg-blue-500";
+    }
+  };
+
+  // Function to show status text
+  const getStatusText = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'completed':
+        return "Done";
+      case 'in-progress':
+        return "In Progress";
+      case 'scheduled':
+      default:
+        return "Scheduled";
+    }
+  };
+
+  // Function to check if a date is today
+  const isToday = (date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-bold text-slate-700">Tests Schedule</h2>
         <div className="bg-cyan-50 text-cyan-600 px-3 py-1 rounded-lg text-sm font-medium">
-          <CalendarIcon size={14} className="inline mr-1" /> Jan 2023
+          {isToday(selectedDate) ? "Today" : ""}
         </div>
-      </div>
-
-      <div className="mb-6 flex justify-between items-center">
-        <button className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded-lg transition-colors">
-          <ChevronLeft size={18} />
-        </button>
-        <span className="font-medium text-slate-800">{currentMonth}</span>
-        <button className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded-lg transition-colors">
-          <ChevronRight size={18} />
-        </button>
       </div>
 
       <div className="mb-6">
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {days.map((day) => (
-            <div
-              key={day}
-              className="text-center text-xs font-medium text-slate-500"
-            >
-              {day}
-            </div>
-          ))}
+        <div className="react-calendar-custom">
+          <Calendar 
+            onChange={handleDateChange}
+            value={selectedDate}
+            tileClassName={({ date }) => {
+              // Add custom classes for dates with events and for today
+              const classes = [];
+              
+              // Check if this date is today
+              if (isToday(date)) {
+                classes.push('today-date');
+              }
+              
+              // Check if any tests exist for this date
+              if (allTests.length > 0) {
+                const formattedDate = date.toISOString().split('T')[0];
+                const hasTests = allTests.some(test => {
+                  if (test.date) {
+                    let testDate;
+                    if (test.date.includes('-')) {
+                      testDate = test.date;
+                    } else {
+                      testDate = new Date(test.date).toISOString().split('T')[0];
+                    }
+                    return testDate === formattedDate;
+                  }
+                  return false;
+                });
+                
+                if (hasTests) {
+                  classes.push('has-events');
+                }
+              }
+              
+              return classes.join(' ');
+            }}
+          />
         </div>
-
-        {dates.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
-            {week.map((date, dateIndex) => {
-              const isCurrentMonth =
-                date > 9 ||
-                (weekIndex < 2 && dateIndex > 2) ||
-                (weekIndex > 3 && dateIndex < 3);
-              const isSelected = date === selectedDate && weekIndex === 1;
-              const hasEvents =
-                date === 7 || date === 12 || date === 15 || date === 20;
-
-              return (
-                <div
-                  key={`${weekIndex}-${dateIndex}`}
-                  className={`
-                    relative text-center py-2 text-sm rounded-lg transition-all duration-200
-                    ${
-                      isCurrentMonth ? "text-slate-400" : "text-slate-700"
-                    }
-                    ${
-                      isSelected
-                        ? "bg-cyan-500 to-blue-500 text-white shadow-sm"
-                        : "hover:bg-slate-100 cursor-pointer"
-                    }
-                  `}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  {date}
-                  {hasEvents && !isSelected && (
-                    <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-cyan-500"></span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
       </div>
 
       <div className="flex border-b mb-4">
@@ -116,55 +207,109 @@ const TestScheduleCalendar = ({ testEntries }) => {
         <div className="flex items-center">
           <div className="w-1 h-5 bg-cyan-500 rounded-full mr-2"></div>
           <div className="text-sm font-medium text-slate-700">
-            January 12
+            {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+            {isToday(selectedDate) && " (Today)"}
           </div>
         </div>
 
-        <div className="space-y-2.5 mt-2">
-          {testEntries.map((entry) => (
-            <div
-              key={entry.id}
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 hover:shadow-sm transition-all cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center">
-                  <div
-                    className={`w-2 h-8 ${entry.color} rounded-full mr-2`}
-                  ></div>
-                  <span className="text-sm font-bold text-slate-700">
-                    {entry.type}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader className="animate-spin text-cyan-600" size={24} />
+          </div>
+        ) : filteredTests.length > 0 ? (
+          <div className="space-y-2.5 mt-2">
+            {filteredTests.map((entry) => (
+              <div
+                key={entry.id}
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 hover:shadow-sm transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center">
+                    <div
+                      className={`w-2 h-8 ${entry.color} rounded-full mr-2`}
+                    ></div>
+                    <span className="text-sm font-bold text-slate-700">
+                      {entry.type}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-lg ${
+                      entry.status === "completed"
+                        ? "bg-emerald-100 text-emerald-600"
+                        : entry.status === "in-progress"
+                        ? "bg-amber-100 text-amber-600"
+                        : "bg-blue-100 text-blue-600"
+                    }`}
+                  >
+                    {getStatusText(entry.status)}
                   </span>
                 </div>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-lg ${
-                    entry.status === "completed"
-                      ? "bg-emerald-100 text-emerald-600"
-                      : entry.status === "in-progress"
-                      ? "bg-amber-100 text-amber-600"
-                      : "bg-blue-100 text-blue-600"
-                  }`}
-                >
-                  {entry.status === "completed"
-                    ? "Done"
-                    : entry.status === "in-progress"
-                    ? "In Progress"
-                    : entry.time}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-slate-500">
-                  {entry.patient}
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-slate-500">
+                    {entry.patient}
+                  </div>
+                  <ArrowRight size={14} className="text-slate-400" />
                 </div>
-                <ArrowRight size={14} className="text-slate-400" />
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-32 text-slate-500 text-sm">
+            No Data Found
+          </div>
+        )}
       </div>
 
-      <button className="bg-cyan-500 to-blue-500 text-white w-full py-2.5 rounded-xl mt-4 text-sm font-medium shadow-sm hover:shadow-md transition-all flex items-center justify-center">
-        <Plus size={16} className="mr-1" /> Add New Appointment
-      </button>
+      {/* CSS for styling the React Calendar */}
+      <style jsx>{`
+        .react-calendar-custom .react-calendar {
+          width: 100%;
+          border: none;
+          font-family: inherit;
+        }
+        
+        .react-calendar-custom .react-calendar__tile {
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 14px;
+        }
+        
+        .react-calendar-custom .react-calendar__tile--active {
+          background: #06b6d4;
+          color: white;
+        }
+        
+        .react-calendar-custom .react-calendar__tile.today-date {
+          background-color: #e0f2fe;
+          font-weight: bold;
+        }
+        
+        .react-calendar-custom .react-calendar__tile.has-events::after {
+          content: '';
+          display: block;
+          width: 4px;
+          height: 4px;
+          background-color: #06b6d4;
+          border-radius: 50%;
+          position: absolute;
+          bottom: 4px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        
+        .react-calendar-custom .react-calendar__navigation {
+          margin-bottom: 8px;
+        }
+        
+        .react-calendar-custom .react-calendar__navigation button {
+          color: #06b6d4;
+          border-radius: 6px;
+        }
+        
+        .react-calendar-custom .react-calendar__navigation button:hover {
+          background-color: #ecfeff;
+        }
+      `}</style>
     </div>
   );
 };

@@ -141,50 +141,6 @@ const MedisureDashboard = () => {
     },
   ];
 
-  // Calendar test entries
-  const testEntries = [
-    {
-      id: 1,
-      type: "CT SCAN",
-      time: "10:45",
-      patient: "Sarah Johnson",
-      status: "scheduled",
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      type: "CT SCAN",
-      time: "11:30",
-      patient: "Robert Davis",
-      status: "completed",
-      color: "bg-emerald-500",
-    },
-    {
-      id: 3,
-      type: "CT SCAN",
-      time: "13:15",
-      patient: "Emma Wilson",
-      status: "in-progress",
-      color: "bg-amber-500",
-    },
-    {
-      id: 4,
-      type: "CT SCAN",
-      time: "14:45",
-      patient: "Michael Brown",
-      status: "scheduled",
-      color: "bg-blue-500",
-    },
-    {
-      id: 5,
-      type: "CT SCAN",
-      time: "16:00",
-      patient: "Jennifer Lee",
-      status: "scheduled",
-      color: "bg-blue-500",
-    },
-  ];
-
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
       <div className="lg:hidden fixed top-4 left-4 z-30">
@@ -221,7 +177,7 @@ const MedisureDashboard = () => {
           
           <TestDistributionChart testsData={testsData} />
           
-          <TestScheduleCalendar testEntries={testEntries} />
+          <TestScheduleCalendar />
           
           <RecentTestsSection recentTests={recentTests || []} />
         </div>
