@@ -10,6 +10,19 @@ import express from "express";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import { Client } from "whatsapp-web.js";
+import qrcode from "qrcode-terminal";
+
+clientWhatsapp.on("qr", (qr) => {
+  qrcode.generate(qr, { small: true });
+  console.log("Scan the QR code above to log in to WhatsApp Web.");
+});
+
+clientWhatsapp.on("ready", () => {
+  console.log("Client is ready!");
+});
+
+clientWhatsapp.initialize();
 
 configDotenv();
 const app = express();
