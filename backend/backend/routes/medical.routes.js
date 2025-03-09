@@ -15,4 +15,6 @@ router.get("/scanReports/:id", getScanReportById);
 // Route for getting images of a specific scan report
 router.get("/scanReports/:id/images", getScanReportImages);
 
+router.post("/sendMessage")
+
 export default router;
