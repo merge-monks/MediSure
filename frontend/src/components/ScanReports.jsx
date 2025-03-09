@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -9,6 +9,25 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Add a function to check API server status at component load
+const checkApiServer = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch("http://localhost:4000/api/health", {
+      method: "GET",
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.warn("API server check failed:", error.message);
+    return false;
+  }
+};
+
 const ScanReports = () => {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -18,14 +37,27 @@ const ScanReports = () => {
   const [analysisError, setAnalysisError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [patientName, setPatientName] = useState("");
-  const [scanType, setScanType] = useState("Brain Tumor Scan");  // Changed from "Brain tumor" to "CT scan"
+  const [scanType, setScanType] = useState("Brain Tumor Scan");
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
   const [predictions, setPredictions] = useState([]);
   // Add state for custom alert modal
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [serverStatus, setServerStatus] = useState(null); // null = unknown, true = online, false = offline
 
- 
+  // Check API server status on component mount
+  useEffect(() => {
+    const checkServer = async () => {
+      const isOnline = await checkApiServer();
+      setServerStatus(isOnline);
+      if (!isOnline) {
+        console.warn("API server appears to be offline. Some features may not work correctly.");
+      }
+    };
+    
+    checkServer();
+  }, []);
+
   const navigateToDash = () => {
     navigate('/Dashboard');
   }
@@ -37,7 +69,7 @@ const ScanReports = () => {
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
-    setScanType("Brain Tumor Scan");  // Changed from "Brain tumor" to "CT scan"
+    setScanType("Brain Tumor Scan");
     setAnalysisCompleted(false);
     setPredictions([]);
   };
@@ -86,14 +118,12 @@ const ScanReports = () => {
     
     const results = [];
     const extractedPredictions = [];
-    const imageFilenames = []; // Store image filenames
     
     // Determine which endpoint to use based on scan type
-    const endpoint = scanType === "bone tissue" 
+    const endpoint = scanType.toLowerCase().includes("bone") 
       ? "http://127.0.0.1:5000/predict_bone_route"
       : "http://127.0.0.1:5000/predict";
     
-    // Add console log to show endpoint selection
     console.log(`Processing ${selectedFiles.length} files with scan type: ${scanType}`);
     console.log(`Using endpoint: ${endpoint}`);
     
@@ -120,46 +150,19 @@ const ScanReports = () => {
           throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
 
-        // Get the prediction data from headers or JSON
-        let prediction = "Unknown";
-        const contentType = response.headers.get('Content-Type');
-        let imageFilename = null; // Store the image filename from response
+        // Get the prediction from X-Prediction header
+        let prediction = response.headers.get('X-Prediction') || "Unknown";
+        console.log(`Received prediction from header: ${prediction}`);
         
-        if (contentType && contentType.includes('application/json')) {
-          const jsonData = await response.json();
-          prediction = jsonData.prediction || "Unknown";
-          
-          // Get the image URL and filename if provided
-          const imageUrl = jsonData.image_url ? jsonData.image_url : null;
-          imageFilename = jsonData.image_filename || file.name;
-          
-          results.push({
-            fileName: file.name,
-            resultImage: imageUrl,
-            prediction: prediction,
-            imageFilename: imageFilename // Store the image filename
-          });
-        } else {
-          // Get the blob from the response
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          
-          // Get prediction from custom header if available
-          prediction = response.headers.get('X-Prediction') || "Unknown";
-          imageFilename = response.headers.get('X-Image-Filename') || file.name;
-          
-          results.push({
-            fileName: file.name,
-            resultImage: imageUrl,
-            prediction: prediction,
-            imageFilename: imageFilename // Store the image filename
-          });
-        }
+        // Get the image blob and create URL
+        const imageBlob = await response.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
         
-        // Add the filename to our list if we got one
-        if (imageFilename) {
-          imageFilenames.push(imageFilename);
-        }
+        results.push({
+          fileName: file.name,
+          resultImage: imageUrl,
+          prediction: prediction
+        });
         
         extractedPredictions.push(prediction);
         
@@ -176,12 +179,6 @@ const ScanReports = () => {
     setAnalysisResults(results);
     setPredictions(extractedPredictions);
     
-    // Store the image filenames to be used during submission
-    const successfulResults = results.filter(result => !result.isError);
-    const validImageFilenames = successfulResults
-      .filter(result => result.imageFilename)
-      .map(result => result.imageFilename);
-    
     // Check if any results had errors
     const hasErrors = results.some(result => result.isError);
     if (hasErrors) {
@@ -193,29 +190,20 @@ const ScanReports = () => {
     }
   };
 
-  // Function to extract prediction from image title
-  const extractPredictionFromImage = async (imageUrl) => {
-    // For implementation simplicity, we'll return Unknown
-    // The real prediction will be extracted when the image loads in the UI
-    return "Unknown";
-  };
-
   const handleSubmit = async () => {
     // Extract predictions from results
     const tumorTypes = analysisResults
       .filter(result => !result.isError)
       .map(result => result.prediction || "No tumor");
     
-    // Extract image filenames
-    const imageFilenames = analysisResults
-      .filter(result => !result.isError && result.imageFilename)
-      .map(result => result.imageFilename);
+    // Add additional logging to verify predictions
+    console.log("Tumor predictions being saved:", tumorTypes);
     
     const reportData = {
       patientName,
       scanType,
       predictions: tumorTypes,
-      images: imageFilenames // Add images array to the report data
+      images: selectedFiles.map(file => file.name) // Use filenames
     };
     
     console.log("Submitting report with data:", reportData);
@@ -282,7 +270,6 @@ const ScanReports = () => {
       setUploadStatus("success");
       setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! ${data.reportId ? `Report ID: ${data.reportId}` : ""}`);
       setShowAlert(true);
-      
     } catch (error) {
       console.error("Error saving report:", error);
       setUploadStatus("error");
@@ -292,6 +279,13 @@ const ScanReports = () => {
     }
   };
 
+  // Function to extract prediction from image title
+  const extractPredictionFromImage = async (imageUrl) => {
+    // For implementation simplicity, we'll return Unknown
+    // The real prediction will be extracted when the image loads in the UI
+    return "Unknown";
+  };
+
   // Add function to clear the form after submission
   const clearForm = () => {
     setSelectedFiles([]);
@@ -299,7 +293,7 @@ const ScanReports = () => {
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
-    setScanType("Brain Tumor scan");  // Changed from "Brain tumor" to "CT scan"
+    setScanType("Brain Tumor scan");
     setAnalysisCompleted(false);
     setPredictions([]);
     setShowAlert(false);
@@ -337,6 +331,8 @@ const ScanReports = () => {
       );
     }
   };
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -416,7 +412,6 @@ const ScanReports = () => {
               multiple
               onChange={handleFileSelect}
             />
-
             <div className="flex flex-col items-center">
               {selectedFiles.length === 0 ? (
                 <>
@@ -469,14 +464,12 @@ const ScanReports = () => {
               ${uploadStatus === 'uploading' ? 'bg-blue-50 text-blue-700' : 
                 uploadStatus === 'success' ? 'bg-green-50 text-green-700' : 
                 uploadStatus === 'partial' ? 'bg-yellow-50 text-yellow-700' :
-                'bg-red-50 text-red-700'}`
-              }
+                'bg-red-50 text-red-700'}`}
             >
               {uploadStatus === 'uploading' && <div className="animate-spin h-5 w-5 border-2 border-blue-700 border-t-transparent rounded-full mr-2"></div>}
               {uploadStatus === 'success' && <Check size={18} className="mr-2" />}
               {uploadStatus === 'partial' && <AlertCircle size={18} className="mr-2" />}
               {uploadStatus === 'error' && <AlertCircle size={18} className="mr-2" />}
-              
               <span className="text-sm font-medium">
                 {uploadStatus === 'uploading' && `Analyzing images... (${progress.current}/${progress.total})`}
                 {uploadStatus === 'success' && 'Analysis completed successfully!'}
@@ -498,8 +491,8 @@ const ScanReports = () => {
                     <div className={`p-3 ${result.isError ? 'bg-red-50' : 'bg-slate-50'} border-b`}>
                       <p className="font-medium text-slate-700 truncate">{result.fileName}</p>
                       {!result.isError && (
-                        <p className="text-sm text-cyan-600">
-                          Tumor type: {result.prediction || "Analyzing..."}
+                        <p className="text-sm font-medium text-cyan-600">
+                          Tumor type: <span className="bg-cyan-100 px-2 py-0.5 rounded-full">{result.prediction || "Unknown"}</span>
                         </p>
                       )}
                     </div>
@@ -510,40 +503,10 @@ const ScanReports = () => {
                           <p className="text-center">{result.error}</p>
                         </div>
                       ) : (
-                        <img 
-                          src={result.resultImage} 
-                          alt={`Analysis result for ${result.fileName}`} 
+                        <img
+                          src={result.resultImage}
+                          alt={`Analysis result for ${result.fileName}`}
                           className="max-w-full h-auto rounded"
-                          onLoad={(e) => {
-                            if (result.prediction && result.prediction !== "Unknown") {
-                              return;
-                            }
-                            
-                            const titleRegex = /Predicted: (\w+)/;
-                            
-                            const canvas = document.createElement('canvas');
-                            const img = e.target;
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0);
-                            
-                             const title = img.parentElement?.textContent || '';
-                            const match = title.match(titleRegex);
-                            
-                            if (match && match[1]) {
-                              const predictedType = match[1];
-                              const newResults = [...analysisResults];
-                              if (newResults[index]) {
-                                newResults[index].prediction = predictedType;
-                                setAnalysisResults(newResults);
-                                
-                                const newPredictions = [...predictions];
-                                newPredictions[index] = predictedType;
-                                setPredictions(newPredictions);
-                              }
-                            }
-                          }}
                         />
                       )}
                     </div>

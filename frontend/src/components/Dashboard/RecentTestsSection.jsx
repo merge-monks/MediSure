@@ -95,7 +95,6 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                   </span>
                 </div>
                 <h3 className="text-white font-bold text-xl mt-2">
-                  {/* Show original scan type name */}
                   {test.name}
                 </h3>
               </div>
@@ -109,12 +108,20 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                 
                 <div className="bg-slate-50 p-3 rounded-lg">
                   <p className="text-sm text-slate-700 font-medium">Findings:</p>
-                  <p className="text-sm text-slate-600 mt-1">
-                    {test.description || "No findings recorded"}
-                  </p>
+                  <div className="text-sm text-slate-600 mt-1">
+                    {Array.isArray(test.predictions) ? (
+                      test.predictions.map((prediction, idx) => (
+                        <div key={idx} className="mb-1">
+                          <span className="bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs mr-1">
+                            {idx + 1}
+                          </span> {prediction || "No findings recorded"}
+                        </div>
+                      ))
+                    ) : (
+                      <p>{test.description || "No findings recorded"}</p>
+                    )}
+                  </div>
                 </div>
-
-                {/* Removed the arrow button - entire card is now clickable */}
               </div>
             </div>
           ))
