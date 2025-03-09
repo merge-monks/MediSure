@@ -35,7 +35,7 @@ const DoctorInfoCard = () => {
           <p className="text-slate-500 text-sm mb-1">Hospital</p>
           <p className="font-medium text-slate-800 flex items-center">
             <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-            Crossroads Premier Hospital
+            Civil Hospital
           </p>
         </div>
 
@@ -43,9 +43,7 @@ const DoctorInfoCard = () => {
           <p className="text-slate-500 text-sm mb-1">Appointments</p>
           <div className="flex justify-between items-center">
             <p className="font-medium text-slate-800">27</p>
-            <p className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-lg">
-              January 2023
-            </p>
+           
           </div>
         </div>
 
