@@ -203,7 +203,7 @@ const ScanReports = () => {
       patientName,
       scanType,
       predictions: tumorTypes,
-      images: selectedFiles.map(file => file.name) // Use filenames
+      images: selectedFiles.map(file => file.name) 
     };
     
     console.log("Submitting report with data:", reportData);
