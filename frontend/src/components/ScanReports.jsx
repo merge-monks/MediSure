@@ -252,19 +252,26 @@ const ScanReports = () => {
   };
 
   const handleSubmit = async () => {
-    // Extract predictions from results
+    // Extract predictions and image URLs from results
     const tumorTypes = analysisResults
       .filter(result => !result.isError)
       .map(result => result.prediction || "No tumor");
     
+    // Get the processed image URLs from the analysis results
+    const processedImageUrls = analysisResults
+      .filter(result => !result.isError)
+      .map(result => result.resultImage);
+    
     console.log("Tumor predictions being saved:", tumorTypes);
+    console.log("Image URLs being saved:", processedImageUrls);
     
     const reportData = {
       patientName,
       phoneNumber,
       scanType,
       predictions: tumorTypes,
-      images: selectedFiles.map(file => file.name) 
+      reportImages: processedImageUrls, // Use the processed image URLs
+      originalFileNames: selectedFiles.map(file => file.name)
     };
     
     console.log("Submitting report with data:", reportData);
@@ -277,12 +284,8 @@ const ScanReports = () => {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          // Remove credentials if the backend doesn't support them
-          // "Access-Control-Allow-Origin": "*"  // This should be set on the server side
         },
-        // Only include credentials if the backend is configured to accept them
-        // credentials: 'include',
-        mode: 'cors', // Explicitly set CORS mode
+        mode: 'cors',
         body: JSON.stringify(reportData)
       });
   

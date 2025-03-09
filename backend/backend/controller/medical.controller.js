@@ -1,4 +1,19 @@
+import { Client } from 'whatsapp-web.js';
 import ScanReport from "../models/ScanReport.model.js";
+
+// Initialize WhatsApp client
+const clientWhatsapp = new Client();
+
+// Initialize WhatsApp connection
+clientWhatsapp.initialize();
+
+clientWhatsapp.on('qr', (qr) => {
+    console.log('QR RECEIVED', qr);
+});
+
+clientWhatsapp.on('ready', () => {
+    console.log('Client is ready!');
+});
 
 // Controller for handling scan report operations
 export const createScanReport = async (req, res) => {
@@ -188,31 +203,33 @@ export const getScanReportImages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  const { number, name, scanType, imageUrl } = req.body;
-
-  sendWhatsApp(number, name, scanType, imageUrl);
-
-  return res.status(200).json({ result: "Success" });
+    try {
+        const { number, name, scanType, imageUrl } = req.body;
+        await sendWhatsApp(number, name, scanType, imageUrl);
+        return res.status(200).json({ success: true, message: "Message sent successfully" });
+    } catch (error) {
+        console.error("Error sending WhatsApp message:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Failed to send WhatsApp message",
+            error: error.message 
+        });
+    }
 };
 
-const sendWhatsApp = (number, name, scanType, imageUrl) => {
-  const recipientId = `91${number}@c.us`;
-  const message = `Hi ${name}, you report
-`;
-  clientWhatsapp
-    .sendMessage(recipientId, message)
-    .then(() => {
-      console.log("Message sent successfully.");
-
-      return clientWhatsapp.sendMessage(recipientId, {
-        media: imageUrl,
-        caption: `Scan Type: ${scanType}`,
-      });
-    })
-    .then(() => {
-      console.log("Image sent successfully. Scan Type:", scanType);
-    })
-    .catch((error) => {
-      console.error("Error sending message or image:", error);
-    });
+const sendWhatsApp = async (number, name, scanType, imageUrl) => {
+    const recipientId = `91${number}@c.us`;
+    const message = `Hi ${name}, your report is ready`;
+    
+    try {
+        await clientWhatsapp.sendMessage(recipientId, message);
+        await clientWhatsapp.sendMessage(recipientId, {
+            media: imageUrl,
+            caption: `Scan Type: ${scanType}`
+        });
+        console.log("Message and image sent successfully");
+    } catch (error) {
+        console.error("Error sending WhatsApp message:", error);
+        throw error;
+    }
 };

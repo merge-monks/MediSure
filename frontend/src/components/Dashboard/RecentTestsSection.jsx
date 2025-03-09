@@ -15,7 +15,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
         setLoading(true);
         // Use the centralized API service instead of direct fetch
         const data = await getMedicalReports();
-        
+
         if (data.success && data.reports && data.reports.length > 0) {
           setRecentTests(data.reports);
         } else {
@@ -40,7 +40,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
     navigate("/all-tests");
   };
 
- ;
+  ;
 
   if (loading) {
     return (
@@ -70,7 +70,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
         <h2 className="font-bold text-slate-700 text-lg">
           Recent Tests Analyzed
         </h2>
-        <button 
+        <button
           onClick={handleViewAll}
           className="text-sm text-cyan-600 font-medium flex items-center hover:text-cyan-700 transition-colors"
         >
@@ -105,7 +105,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                     Patient: {test.patient}
                   </p>
                 </div>
-                
+
                 <div className="bg-slate-50 p-3 rounded-lg mb-3">
                   <p className="text-sm text-slate-700 font-medium">Findings:</p>
                   <div className="text-sm text-slate-600 mt-1">
@@ -123,20 +123,16 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                   </div>
                 </div>
                 <button
-                  
+                onClick={() => {
+                    alert("Feature under maintenance")}}
+
                   className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-lg transition-colors cursor-pointer"
                 >
-                  <Send size={16} onClick={() => {
-                    fetch("/api/medical/sendMessage",{
-                      method:"POST",
-                      headers: {"content-type": "application/json"},
-                      body: JSON.stringify({name: patientName ,number:phoneNumber , scanType: scanType,imageUrl:selectedFiles.map(file => file.name) })
-                    })
-                  }}/>
+                  <Send size={16} />
                   Send Report
                 </button>
               </div>
-            </div> 
+            </div>
           ))
         ) : (
           <div className="col-span-full text-center py-8 text-slate-500">
