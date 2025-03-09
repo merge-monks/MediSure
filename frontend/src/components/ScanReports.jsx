@@ -18,7 +18,7 @@ const ScanReports = () => {
   const [analysisError, setAnalysisError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [patientName, setPatientName] = useState("");
-  const [scanType, setScanType] = useState("CT scan");
+  const [scanType, setScanType] = useState("Brain Tumor Scan");  // Changed from "Brain tumor" to "CT scan"
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
   const [predictions, setPredictions] = useState([]);
   // Add state for custom alert modal
@@ -37,7 +37,7 @@ const ScanReports = () => {
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
-    setScanType("CT scan");
+    setScanType("Brain Tumor Scan");  // Changed from "Brain tumor" to "CT scan"
     setAnalysisCompleted(false);
     setPredictions([]);
   };
@@ -52,6 +52,17 @@ const ScanReports = () => {
       setAnalysisCompleted(false);
       setPredictions([]);
     }
+  };
+
+  // Update the setScanType to include console log
+  const handleScanTypeChange = (e) => {
+    const newScanType = e.target.value;
+    setScanType(newScanType);
+    const endpoint = newScanType === "bone tissue" 
+      ? "http://127.0.0.1:5000/predict_bone_route"
+      : "http://127.0.0.1:5000/predict";
+    console.log(`Scan type changed to: ${newScanType}`);
+    console.log(`Endpoint will be: ${endpoint}`);
   };
 
   const handleUpload = async () => {
@@ -77,6 +88,15 @@ const ScanReports = () => {
     const extractedPredictions = [];
     const imageFilenames = []; // Store image filenames
     
+    // Determine which endpoint to use based on scan type
+    const endpoint = scanType === "bone tissue" 
+      ? "http://127.0.0.1:5000/predict_bone_route"
+      : "http://127.0.0.1:5000/predict";
+    
+    // Add console log to show endpoint selection
+    console.log(`Processing ${selectedFiles.length} files with scan type: ${scanType}`);
+    console.log(`Using endpoint: ${endpoint}`);
+    
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
       setProgress({ current: i + 1, total: selectedFiles.length });
@@ -87,7 +107,7 @@ const ScanReports = () => {
         formData.append("patientName", patientName);
         formData.append("scanType", scanType);
 
-        const response = await fetch("http://127.0.0.1:5000/predict", {
+        const response = await fetch(endpoint, {
           method: "POST",
           body: formData,
           mode: 'cors',
@@ -184,7 +204,7 @@ const ScanReports = () => {
     // Extract predictions from results
     const tumorTypes = analysisResults
       .filter(result => !result.isError)
-      .map(result => result.prediction || "Unknown");
+      .map(result => result.prediction || "No tumor");
     
     // Extract image filenames
     const imageFilenames = analysisResults
@@ -198,37 +218,76 @@ const ScanReports = () => {
       images: imageFilenames // Add images array to the report data
     };
     
+    console.log("Submitting report with data:", reportData);
+    
     // Set uploading state
     setUploadStatus("uploading");
     
     try {
+      // First check if the server is reachable
+      const serverCheck = await fetch("http://localhost:4000/api/health", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include',
+        // Add a timeout
+        signal: AbortSignal.timeout(5000)
+      }).catch(err => {
+        console.warn("Health check failed, proceeding with submission anyway:", err);
+        return { ok: false };
+      });
+      
+      // If server health check fails, log but continue with submission attempt
+      if (!serverCheck.ok) {
+        console.warn("Server health check failed, attempting submission anyway");
+      }
+      
       const response = await fetch("http://localhost:4000/api/medical/scanReports", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify(reportData),
         credentials: 'include'
       });
       
+      // Log response status for debugging
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { message: errorText || "Unknown server error" };
+        }
         throw new Error(errorData.message || "Failed to save report");
       }
       
-      const data = await response.json();
+      // Try parsing JSON but handle cases where response isn't JSON
+      let data;
+      const responseText = await response.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.warn("Response is not valid JSON:", responseText);
+        data = { message: "Report saved but server returned invalid response" };
+      }
       
       // Log success and show alert with more detailed message
       console.log("Report saved successfully:", data);
       setUploadStatus("success");
-      setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! Report ID: ${data.reportId}`);
+      setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! ${data.reportId ? `Report ID: ${data.reportId}` : ""}`);
       setShowAlert(true);
       
     } catch (error) {
       console.error("Error saving report:", error);
       setUploadStatus("error");
       setAnalysisError(error.message || "Failed to submit report to database");
-      setAlertMessage("Error: Failed to save data. Please try again.");
+      setAlertMessage(`Error: ${error.message || "Failed to save data"}. Please try again.`);
       setShowAlert(true);
     }
   };
@@ -240,7 +299,7 @@ const ScanReports = () => {
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
-    setScanType("CT scan");
+    setScanType("Brain Tumor scan");  // Changed from "Brain tumor" to "CT scan"
     setAnalysisCompleted(false);
     setPredictions([]);
     setShowAlert(false);
@@ -329,11 +388,11 @@ const ScanReports = () => {
               <select
                 id="scanType"
                 value={scanType}
-                onChange={(e) => setScanType(e.target.value)}
+                onChange={handleScanTypeChange} // Changed from setScanType to our new handler
                 className="border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white"
               >
-                <option value="CT scan">CT scan</option>
-                <option value="MRI scan">MRI scan</option>
+                <option value="Brain Tumor Scan">Brain Tumor Scans</option>
+                <option value="Bone Tissue Scan">Bone Tissue Scans</option>
               </select>
             </div>
           </div>

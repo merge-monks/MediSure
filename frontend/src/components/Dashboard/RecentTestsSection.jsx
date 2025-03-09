@@ -95,6 +95,7 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                   </span>
                 </div>
                 <h3 className="text-white font-bold text-xl mt-2">
+                  {/* Show original scan type name */}
                   {test.name}
                 </h3>
               </div>

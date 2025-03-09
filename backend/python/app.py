@@ -141,7 +141,7 @@ def predict_tumor():
     except Exception as e:
         if os.path.exists(file_path):
             os.remove(file_path)
-        return jsonify({'error': str(e)}), 500
+            return jsonify({'error': str(e)}), 500
     if file and allowed_file(file.filename):
         # Create unique filename to prevent overwriting
         filename = secure_filename(file.filename)

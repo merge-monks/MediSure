@@ -13,14 +13,26 @@ export const createScanReport = async (req, res) => {
       });
     }
     
+    // Map scan types to valid enum values but preserve original name
+    let validScanType = scanType;
+    let originalScanType = scanType; // Store the original scan type name
+    
+    // Case-insensitive matching for scan types
+    const normalizedScanType = scanType.trim().toLowerCase();
+    
+    if (normalizedScanType === "bone tissue scan") {
+      validScanType = "CT scan"; // Map to valid enum for database
+    } else if (normalizedScanType === "brain tumor scan") {
+      validScanType = "MRI scan"; // Map to valid enum for database
+    }
+    
     // Create a new scan report
     const newScanReport = new ScanReport({
       patientName,
-      scanType,
+      scanType: validScanType,
+      originalScanType, // Store the original name
       predictions: predictions || [],
-      images: images || [], // Store image filenames
-      // If user authentication is implemented, include user ID
-      // userId: req.user?._id
+      images: images || [],
     });
     
     // Save to database
@@ -52,9 +64,8 @@ export const getAllScanReports = async (req, res) => {
     const formattedReports = reports.map(report => {
       // Generate colors based on scan type
       const colorMap = {
-        "CT scan": "from-cyan-500 to-blue-500",
-        "MRI scan": "from-purple-500 to-indigo-500",
-        // Default fallback color
+        "CT scan": "from-cyan-500 to-blue-500", // Used for bone tissue scan
+        "MRI scan": "from-purple-500 to-indigo-500", // Used for Brain Tumor scan
         "default": "from-rose-400 to-red-500"
       };
       
@@ -72,9 +83,16 @@ export const getAllScanReports = async (req, res) => {
         ? report.predictions[0]
         : "No findings";
       
+      // Use original scan type name if available, otherwise use a display name based on the enum value
+      let displayName = report.originalScanType || report.scanType;
+      if (!report.originalScanType) {
+        if (report.scanType === "CT scan") displayName = "bone tissue scan";
+        else if (report.scanType === "MRI scan") displayName = "Brain Tumor scan";
+      }
+      
       return {
         id: report._id,
-        name: report.scanType,
+        name: displayName, // Use display name instead of internal enum
         color: color,
         description: tumorType,
         date: date,

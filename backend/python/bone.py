@@ -52,6 +52,6 @@ def predict_bone(image_path):
         seg_output, class_output = model(image)
     
     seg_mask = (seg_output.squeeze().cpu().numpy() > 0.3).astype(np.uint8)
-    tumor_types = ['glioma', 'meningioma', 'pituitary', 'no_tumor']
+    tumor_types = ['tumor', 'no tumor']
     predicted_label = tumor_types[class_output.argmax(dim=1).item()]
     return seg_mask, predicted_label
