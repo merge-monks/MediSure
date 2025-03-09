@@ -1,16 +1,13 @@
 import React from "react";
-import { Search, Plus, Bell, ChevronRight } from "lucide-react";
+import { Plus, Bell, ChevronRight } from "lucide-react";
 
 const Header = ({ navigateToScanReports }) => {
   return (
     <header className="bg-white p-4 lg:p-6 flex justify-between items-center shadow-sm sticky top-0 z-10">
-      <div className="relative w-72 ml-8 lg:ml-0">
-        <input
-          type="text"
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-          placeholder="Search patients, tests, reports..."
-        />
-        <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+      <div className="ml-8 lg:ml-0">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+          Hello Doc
+        </h1>
       </div>
 
       <div className="flex items-center space-x-4">
