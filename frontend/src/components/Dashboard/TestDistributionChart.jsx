@@ -1,15 +1,101 @@
-import React from "react";
-import { Filter } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Filter, Loader } from "lucide-react";
+import { getMedicalReports } from "../../services/apiService";
 
-const TestDistributionChart = ({ testsData }) => {
+const TestDistributionChart = ({ testsData: defaultTestsData }) => {
+  const [testsData, setTestsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalTests, setTotalTests] = useState(0);
+
+  useEffect(() => {
+    const fetchTestData = async () => {
+      try {
+        setLoading(true);
+        const data = await getMedicalReports();
+        
+        if (data.success && data.reports && data.reports.length > 0) {
+          // Process the data to calculate distribution
+          const reports = data.reports;
+          setTotalTests(reports.length);
+          
+          // Count by test type
+          const testCounts = {
+            "Brain Tumor Scan": 0,
+            "Bone Tissue Scan": 0,
+          };
+          
+          reports.forEach(report => {
+            const testName = report.name;
+            if (testName.includes("Brain") || testName.includes("brain")) {
+              testCounts["Brain Tumor Scan"]++;
+            } else if (testName.includes("Bone") || testName.includes("bone")) {
+              testCounts["Bone Tissue Scan"]++;
+            }
+          });
+          
+          // Calculate percentages and create testsData
+          const formattedData = [
+            {
+              name: "Brain Tumor Scan",
+              percentage: Math.round((testCounts["Brain Tumor Scan"] / reports.length) * 100) || 0,
+              color: "bg-cyan-500"
+            },
+            {
+              name: "Bone Tissue Scan",
+              percentage: Math.round((testCounts["Bone Tissue Scan"] / reports.length) * 100) || 0,
+              color: "bg-indigo-500"
+            }
+          ];
+          
+          setTestsData(formattedData);
+        } else {
+          // Fall back to default data if API doesn't return valid data
+          setTestsData(defaultTestsData || [
+            { name: "Brain Tumor Scan", percentage: 60, color: "bg-cyan-500" },
+            { name: "Bone Tissue Scan", percentage: 40, color: "bg-indigo-500" }
+          ]);
+          setTotalTests(428); // Default value
+        }
+      } catch (error) {
+        console.error("Error fetching test distribution data:", error);
+        setError("Failed to load test distribution");
+        // Fall back to default data
+        setTestsData(defaultTestsData || [
+          { name: "Brain Tumor Scan", percentage: 60, color: "bg-cyan-500" },
+          { name: "Bone Tissue Scan", percentage: 40, color: "bg-indigo-500" }
+        ]);
+        setTotalTests(428); // Default value
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestData();
+  }, [defaultTestsData]);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex justify-center items-center" style={{minHeight: "420px"}}>
+        <Loader className="animate-spin text-cyan-600" size={32} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-sm">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+          {error}. Using example data instead.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-slate-700">Test Distribution</h3>
-        <div className="flex items-center text-sm text-cyan-600">
-          <Filter size={14} className="mr-1" />
-          <span>Filter</span>
-        </div>
+        
       </div>
 
       <div className="flex justify-center items-center mb-6">
@@ -19,7 +105,7 @@ const TestDistributionChart = ({ testsData }) => {
               <p className="text-sm font-medium text-slate-600">
                 Total Tests
               </p>
-              <p className="text-2xl font-bold text-slate-800">428</p>
+              <p className="text-2xl font-bold text-slate-800">{totalTests}</p>
               <p className="text-xs text-cyan-600">+8% from last month</p>
             </div>
           </div>
@@ -70,7 +156,7 @@ const TestDistributionChart = ({ testsData }) => {
                 {test.name}
               </span>
               <span className="text-xs text-slate-500">
-                {Math.round((428 * test.percentage) / 100)} tests
+                {Math.round((totalTests * test.percentage) / 100)} tests
               </span>
             </div>
           </div>
