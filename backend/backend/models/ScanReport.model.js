@@ -16,7 +16,7 @@ const scanReportSchema = new mongoose.Schema({
     default: [],
   },
   images: {
-    type: [String],  // Array of image URLs or paths
+    type: [String],  
     default: [],
   },
   timestamp: {

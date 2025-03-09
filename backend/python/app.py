@@ -5,6 +5,9 @@ import cv2
 import numpy as np
 import torch
 import torch.nn as nn
+# Set matplotlib backend to Agg to avoid GUI thread issues
+import matplotlib
+matplotlib.use('Agg')  # Must be before importing pyplot
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, send_file, make_response, send_from_directory
 from flask_cors import CORS
@@ -110,45 +113,53 @@ def predict_tumor():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{timestamp}_{filename}")
     file.save(file_path)
     
-    # try:
-    seg_mask, predicted_label = predict(file_path)
-    
-    original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-    original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
-    
-    plt.figure(figsize=(6, 6))
-    plt.imshow(original_image, cmap='gray')
-    plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
-    plt.title(f"Predicted: {predicted_label}")
-    plt.axis("off")
-    
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
-    plt.close()
-    buf.seek(0)
-    
-    # Create response with prediction in header
-    response = make_response(send_file(buf, mimetype='image/png'))
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    # Add prediction header and expose it
-    response.headers.add('X-Prediction', predicted_label)
-    response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
-    
-    # Clean up the file after processing
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    try:
+        seg_mask, predicted_label = predict(file_path)
         
-    return response
-    
-    # except Exception as e:
-    #     if os.path.exists(file_path):
-    #         os.remove(file_path)
-    #     return jsonify({'error': str(e)}), 500
+        original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(original_image, cmap='gray')
+        plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+        plt.title(f"Predicted: {predicted_label}")
+        plt.axis("off")
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+        plt.close()
+        buf.seek(0)
+        
+        # Create response with prediction in header
+        response = make_response(send_file(buf, mimetype='image/png'))
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        # Add prediction header and expose it
+        response.headers.add('X-Prediction', predicted_label)
+        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
+        
+        # Clean up the file after processing
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        return response
+        
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/predict_bone_route', methods=['POST'])
+@app.route('/predict_bone_route', methods=['POST', 'OPTIONS'])
 def predict_bone_route():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+        
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
