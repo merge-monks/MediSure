@@ -403,7 +403,7 @@ const MedisureDashboard = () => {
             <div className="flex justify-center items-center mb-6">
               <div className="w-56 h-56 relative">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center bg-white p-4 rounded-full shadow-md">
+                  <div className="text-center bg-white p-4 rounded-full ">
                     <p className="text-sm font-medium text-slate-600">
                       Total Tests
                     </p>
