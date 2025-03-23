@@ -3,10 +3,14 @@ import mongoose from "mongoose";
 //Schema
 const userSchema = new mongoose.Schema(
   {
-    displayName: {
+   
+    firstName: {
       type: String,
       required: true,
-      minlength: 5,
+    },
+    lastName: {
+      type: String,
+      required: true,
     },
     email: {
       type: String,
@@ -17,6 +21,39 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 5,
+    },
+    title: {
+      type: String,
+    },
+    specialty: {
+      type: String,
+    },
+    npiNumber: {
+      type: String,
+    },
+    licenseNumber: {
+      type: String,
+    },
+    practiceName: {
+      type: String,
+    },
+    practiceType: {
+      type: String,
+      enum: ["solo", "group", "hospital", "other"],
+    },
+    ehr: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    termsConsent: {
+      type: Boolean,
+      default: false,
+    },
+    hipaaConsent: {
+      type: Boolean,
+      default: false,
     },
     gender: {
       type: String,

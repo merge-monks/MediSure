@@ -5,21 +5,37 @@ import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import transforms
+# Set matplotlib backend to Agg to avoid GUI thread issues
+import matplotlib
+matplotlib.use('Agg')  # Must be before importing pyplot
 import matplotlib.pyplot as plt
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS  # Import CORS
+from flask import Flask, request, jsonify, send_file, make_response, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import io
+from bone import predict_bone
 import base64
+import time
+import uuid
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
-UPLOAD_FOLDER = 'uploads'
+# Configure CORS properly - allow all origins explicitly
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",  # Allow all origins
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tif', 'tiff', 'dicom', 'dcm'}
+
+# Create uploads directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 IMAGE_SIZE = 128  # Resize to 128x128
 
 class MultiTaskUNet(nn.Module):
@@ -69,8 +85,81 @@ def predict(image_path):
     predicted_label = tumor_types[class_output.argmax(dim=1).item()]
     return seg_mask, predicted_label
 
-@app.route('/predict', methods=['POST'])
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict_tumor():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+        
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    patient_name = request.form.get('patientName', 'Unknown')
+    scan_type = request.form.get('scanType', 'CT scan')
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    filename = secure_filename(file.filename)
+    timestamp = str(int(time.time()))
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{timestamp}_{filename}")
+    file.save(file_path)
+    
+    try:
+        seg_mask, predicted_label = predict(file_path)
+        
+        original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(original_image, cmap='gray')
+        plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+        plt.title(f"Predicted: {predicted_label}")
+        plt.axis("off")
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+        plt.close()
+        buf.seek(0)
+        
+        # Create response with prediction in header
+        response = make_response(send_file(buf, mimetype='image/png'))
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        # Add prediction header and expose it
+        response.headers.add('X-Prediction', predicted_label)
+        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
+        
+        # Clean up the file after processing
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        return response
+        
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/predict_bone_route', methods=['POST', 'OPTIONS'])
+def predict_bone_route():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+        
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
@@ -82,24 +171,47 @@ def predict_tumor():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
     
-    seg_mask, predicted_label = predict(file_path)
-    
-    original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-    original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
-    
+    try:
+        seg_mask, predicted_label = predict_bone(file_path)
+        
+        original_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        original_image = cv2.resize(original_image, (IMAGE_SIZE, IMAGE_SIZE))
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(original_image, cmap='gray')
+        plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
+        plt.title(f"Predicted: {predicted_label}")
+        plt.axis("off")
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
+        plt.close()  # Close the figure to prevent memory leaks
+        buf.seek(0)
+        
+        # Create response with prediction in header
+        response = make_response(send_file(buf, mimetype='image/png'))
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        # Add prediction header and expose it
+        response.headers.add('X-Prediction', predicted_label)
+        response.headers.add('Access-Control-Expose-Headers', 'X-Prediction')
+        
+        # Clean up the file after processing
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        return response
+        
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': str(e)}), 500
 
-    plt.figure(figsize=(6, 6))
-    plt.imshow(original_image, cmap='gray')
-    plt.imshow(seg_mask, cmap='jet', alpha=0.5)  
-    plt.title(f"Predicted: {predicted_label}")
-    plt.axis("off")
-    
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=100)
-    plt.close()  # Close the figure to prevent memory leaks
-    buf.seek(0)
-    
-    return send_file(buf, mimetype='image/png')
+# Route to serve uploaded images
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=False)
