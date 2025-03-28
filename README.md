@@ -1,10 +1,10 @@
-# 🩺 Medical Image Analysis System
+# Medical Image Analysis System
 
-A comprehensive full-stack application for medical image analysis, specializing in bone and tumor detection using state-of-the-art deep learning techniques.
+A comprehensive full-stack application for medical image analysis, specializing in bone and tumor detection using advanced deep learning techniques. This system is designed to assist medical professionals in automating diagnostic workflows, improving efficiency, and enhancing patient care.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 ├── backend/                # Backend server implementation
@@ -30,42 +30,45 @@ A comprehensive full-stack application for medical image analysis, specializing 
 
 ---
 
-## ✨ Features
+## Features
 
-- **Bone Analysis and Detection**: Accurate identification of bone-related abnormalities.
-- **Tumor Detection and Classification**: Advanced tumor analysis with classification capabilities.
-- **Real-Time Image Processing**: Fast and efficient image analysis.
-- **User-Friendly Web Interface**: Intuitive and responsive design for seamless user experience.
-- **Secure File Upload System**: Ensures data privacy and integrity.
-
----
-
-## 🛠️ Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- [Node.js](https://nodejs.org/)
-- [Python 3.x](https://www.python.org/)
-- [PyTorch](https://pytorch.org/)
-- [MongoDB](https://www.mongodb.com/)
+- **Bone Analysis and Detection**: Provides accurate identification of bone-related abnormalities using deep learning models.
+- **Tumor Detection and Classification**: Offers advanced tumor analysis with classification capabilities for improved diagnostic accuracy.
+- **Real-Time Image Processing**: Ensures fast and efficient analysis of medical images.
+- **User-Friendly Web Interface**: Features an intuitive and responsive design for seamless interaction.
+- **Secure File Upload System**: Implements robust mechanisms to ensure data privacy and integrity.
 
 ---
 
-## 🚀 Installation
+## Prerequisites
 
-### 1. Backend Setup
+Ensure the following dependencies are installed before proceeding:
+
+- [Node.js](https://nodejs.org/) for backend and frontend development.
+- [Python 3.x](https://www.python.org/) for machine learning components.
+- [PyTorch](https://pytorch.org/) for implementing deep learning models.
+- [MongoDB](https://www.mongodb.com/) for database management.
+
+---
+
+## Installation
+
+### Backend Setup
+Navigate to the backend directory and install the required dependencies:
 ```bash
 cd backend
 npm install
 ```
 
-### 2. Frontend Setup
+### Frontend Setup
+Navigate to the frontend directory and install the required dependencies:
 ```bash
 cd frontend
 npm install
 ```
 
-### 3. Python Environment Setup
+### Python Environment Setup
+Navigate to the Python directory and install the required Python packages:
 ```bash
 cd backend/python
 pip install -r requirements.txt
@@ -73,30 +76,33 @@ pip install -r requirements.txt
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 1. Create a `.env` file in the `backend` directory.
-2. Configure the following:
-   - MongoDB connection string.
-   - Kaggle API credentials for accessing datasets.
+2. Configure the following settings:
+   - MongoDB connection string for database integration.
+   - Kaggle API credentials for accessing datasets used in training and validation.
 
 ---
 
-## ▶️ Running the Application
+## Running the Application
 
-### 1. Start Backend Server
+### Start Backend Server
+Run the backend server using the following command:
 ```bash
 cd backend
 npm start
 ```
 
-### 2. Start Frontend Development Server
+### Start Frontend Development Server
+Run the frontend development server using the following command:
 ```bash
 cd frontend
 npm run dev
 ```
 
-### 3. Run Python Server
+### Run Python Server
+Run the Python server for machine learning components using the following command:
 ```bash
 cd backend/python
 python app.py
@@ -104,34 +110,34 @@ python app.py
 
 ---
 
-## 📖 Usage Instructions
+## Usage Instructions
 
-1. Sign up and log in to the platform.
-2. Navigate to the **Scan Reports** section.
-3. Enter the patient's details (name and phone number).
+1. Register and log in to the platform.
+2. Navigate to the "Scan Reports" section.
+3. Enter the patient's details, including name and phone number.
 4. Upload test images:
    - For brain tumor detection, select images from the "brain tumor" folder.
    - For bone tumor detection, select images from the "bone tumor" folder.
 
-> **Note**: Avoid using Google images for detection as they are often compressed and noisy, which may affect accuracy.
+> **Important**: Avoid using compressed or noisy images (e.g., Google images) as they may negatively impact detection accuracy.
 
 ---
 
-## 🛠️ Development Stack
+## Development Stack
 
-- **Backend**: Express.js
-- **Frontend**: React with Vite
-- **Machine Learning Models**: PyTorch
-- **Database**: MongoDB
-
----
-
-## 📂 Test Images
-
-Sample test images for model validation are available in the `test images/` folder.
+- **Backend**: Built using Express.js for handling API requests and server-side logic.
+- **Frontend**: Developed with React and Vite for a modern and responsive user interface.
+- **Machine Learning Models**: Implemented using PyTorch for high-performance deep learning.
+- **Database**: MongoDB for efficient and scalable data storage.
 
 ---
 
-## 👨‍⚕️ About
+## Test Images
 
-This platform is designed to assist medical professionals in automating diagnostic workflows, improving efficiency, and enhancing patient care.
+A collection of sample test images for validating the machine learning models is available in the `test images/` folder.
+
+---
+
+## About
+
+This platform is specifically designed to assist medical professionals by automating diagnostic processes, reducing manual effort, and improving the accuracy and speed of medical image analysis.
