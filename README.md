@@ -1,8 +1,10 @@
-# Medical Image Analysis System
+# 🩺 Medical Image Analysis System
 
-A full-stack application for medical image analysis, specifically focused on bone and tumor detection using deep learning.
+A comprehensive full-stack application for medical image analysis, specializing in bone and tumor detection using state-of-the-art deep learning techniques.
 
-## Project Structure
+---
+
+## 📂 Project Structure
 
 ```
 ├── backend/                # Backend server implementation
@@ -26,80 +28,110 @@ A full-stack application for medical image analysis, specifically focused on bon
 └── test images/            # Test images for model validation
 ```
 
-## Features
+---
 
-- Bone analysis and detection
-- Tumor detection and classification
-- Real-time image processing
-- User-friendly web interface
-- Secure file upload system
+## ✨ Features
 
-## Prerequisites
+- **Bone Analysis and Detection**: Accurate identification of bone-related abnormalities.
+- **Tumor Detection and Classification**: Advanced tumor analysis with classification capabilities.
+- **Real-Time Image Processing**: Fast and efficient image analysis.
+- **User-Friendly Web Interface**: Intuitive and responsive design for seamless user experience.
+- **Secure File Upload System**: Ensures data privacy and integrity.
 
-- Node.js
-- Python 3.x
-- PyTorch
-- MongoDB
+---
 
-## Installation
+## 🛠️ Prerequisites
 
-1. **Backend Setup**
-    ```bash
-    cd backend
-    npm install
-    ```
+Before you begin, ensure you have the following installed:
 
-2. **Frontend Setup**
-    ```bash
-    cd frontend
-    npm install
-    ```
+- [Node.js](https://nodejs.org/)
+- [Python 3.x](https://www.python.org/)
+- [PyTorch](https://pytorch.org/)
+- [MongoDB](https://www.mongodb.com/)
 
-3. **Python Environment Setup**
-    ```bash
-    cd backend/python
-    pip install -r requirements.txt
-    ```
+---
 
-## Configuration
+## 🚀 Installation
 
-1. Create a `.env` file in the backend directory
-2. Set up MongoDB connection
-3. Configure Kaggle API credentials
+### 1. Backend Setup
+```bash
+cd backend
+npm install
+```
 
-## Running the Application
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+```
 
-1. **Start Backend Server**
-    ```bash
-    cd backend
-    npm start
-    ```
+### 3. Python Environment Setup
+```bash
+cd backend/python
+pip install -r requirements.txt
+```
 
-2. **Start Frontend Development Server**
-    ```bash
-    cd frontend
-    npm run dev
-    ```
+---
 
-3. **Run Python Server**
-    ```bash
-    cd backend/python
-    python app.py
-    ```
+## ⚙️ Configuration
 
-## Usage Instructions
+1. Create a `.env` file in the `backend` directory.
+2. Configure the following:
+   - MongoDB connection string.
+   - Kaggle API credentials for accessing datasets.
 
-1. After signup and login, click on "Scan Reports".
-2. Enter the patient's name and phone number.
-3. If you are selecting brain tumor, select test images from "brain tumor". Otherwise, select test images for "bone tumor".
+---
 
-This platform is for use by doctors to automate their work.
+## ▶️ Running the Application
 
-**Note:** Using Google images for detection will not be helpful as they are compressed and have noise.
+### 1. Start Backend Server
+```bash
+cd backend
+npm start
+```
 
-## Development
+### 2. Start Frontend Development Server
+```bash
+cd frontend
+npm run dev
+```
 
-- Backend runs on Express.js
-- Frontend built with React/Vite
-- ML models implemented in PyTorch
-- Test images available in the 'test images' folder
+### 3. Run Python Server
+```bash
+cd backend/python
+python app.py
+```
+
+---
+
+## 📖 Usage Instructions
+
+1. Sign up and log in to the platform.
+2. Navigate to the **Scan Reports** section.
+3. Enter the patient's details (name and phone number).
+4. Upload test images:
+   - For brain tumor detection, select images from the "brain tumor" folder.
+   - For bone tumor detection, select images from the "bone tumor" folder.
+
+> **Note**: Avoid using Google images for detection as they are often compressed and noisy, which may affect accuracy.
+
+---
+
+## 🛠️ Development Stack
+
+- **Backend**: Express.js
+- **Frontend**: React with Vite
+- **Machine Learning Models**: PyTorch
+- **Database**: MongoDB
+
+---
+
+## 📂 Test Images
+
+Sample test images for model validation are available in the `test images/` folder.
+
+---
+
+## 👨‍⚕️ About
+
+This platform is designed to assist medical professionals in automating diagnostic workflows, improving efficiency, and enhancing patient care.
