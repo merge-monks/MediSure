@@ -34,16 +34,16 @@ app.use(cookieParser());
 app.use(
   session({
     name: "AuthCookie",
-    secret: process.env.COOKIE_SECRET,
+    secret: "secret", // Replaced process.env.COOKIE_SECRET
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.DB_URI,
+      mongoUrl: "mongodb+srv://Admin:8O7DIPsUZ1AG65hy@cluster0.rkdoows.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", // Replaced process.env.DB_URI
       collectionName: "sessions",
     }),
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "PRODUCTION" ? true : false, // Set to true if using HTTPS
+      secure: false, // Replaced process.env.NODE_ENV === "PRODUCTION" ? true : false
       maxAge: 15 * 24 * 60 * 60 * 1000, // 15 day
     },
   })
@@ -57,7 +57,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
 
-app.listen(4000, () => {
+app.listen(4000, () => { // Replaced process.env.PORT
   connectToMongoDB();
   console.log(`Server running on http://localhost:4000`);
 });
