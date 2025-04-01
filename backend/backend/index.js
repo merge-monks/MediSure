@@ -57,7 +57,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
 
-app.listen(4000, () => { // Replaced process.env.PORT
+app.listen(80, () => { // Changed from port 4000 to port 80
   connectToMongoDB();
-  console.log(`Server running on http://localhost:4000`);
+  console.log(`Server running on http://127.0.0.1`); // Updated log message
 });
