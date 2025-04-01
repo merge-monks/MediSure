@@ -52,12 +52,19 @@ app.use(
 app.use("/api/auth", authRoute);
 app.use("/api/medical", medicalRoute);  // Add the medical routes
 // app.use("/api/profile", profileRoute);
+app.get('/', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'MediSure API server is running',
+    timestamp: new Date()
+  });
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
 
-app.listen(80, () => { // Changed from port 4000 to port 80
+app.listen(4000, () => { // Replaced process.env.PORT
   connectToMongoDB();
-  console.log(`Server running on http://127.0.0.1`); // Updated log message
+  console.log(`Server running on http://localhost:4000`);
 });
