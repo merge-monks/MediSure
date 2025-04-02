@@ -7,6 +7,7 @@ import MongoStore from "connect-mongo";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import express from "express";
+import cors from "cors"; // Import cors
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import { Client } from 'whatsapp-web.js';
@@ -27,6 +28,14 @@ clientWhatsapp.initialize();
 
 configDotenv();
 const app = express();
+
+// Enable CORS with multiple origins
+app.use(cors({
+  origin: ["http://localhost:5000", "http://localhost:3000", "http://3.110.188.8"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -52,13 +61,6 @@ app.use(
 app.use("/api/auth", authRoute);
 app.use("/api/medical", medicalRoute);  // Add the medical routes
 // app.use("/api/profile", profileRoute);
-app.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'MediSure API server is running',
-    timestamp: new Date()
-  });
-});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
