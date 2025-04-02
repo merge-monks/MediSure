@@ -7,15 +7,13 @@ import { useNavigate } from "react-router-dom";
 export default function Hero() {
   const navigate = useNavigate();
   const [titleNumber, setTitleNumber] = useState(0);
-  const titles = useMemo(
-    () => [
-      "AI precision",
-      "Faster reports",
-      "Smart alerts",
-      "Doctor empowerment",
-    ],
-    []
-  );
+  const titles = [
+    "AI precision",
+    "Faster reports",
+    "Smart alerts",
+    "Doctor empowerment",
+  ];
+  
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

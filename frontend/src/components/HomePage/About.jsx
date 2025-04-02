@@ -1,6 +1,6 @@
 import React from "react";
-import { cn } from "../lib/utils"; // Ensure cn is correctly imported
-import * as Icons from "@tabler/icons-react";
+import { cn } from "../lib/utils";
+import { BotMessageSquare, Cable, CircleHelp, Cloud, DollarSign, Waypoints } from "lucide-react";
 
 function Features() {
   return (
@@ -21,42 +21,42 @@ export function FeaturesSectionWithHoverEffects() {
       title: "AI-Powered Report Scanning",
       description:
         "AI-driven model analyzes and extracts key insights from reports significantly reducing doctor's workload.",
-      icon: <Icons.IconAdjustmentsBolt className="w-8 h-8" />,
+      icon: <BotMessageSquare className="w-8 h-8" />,
       color: "from-blue-500/20 to-blue-500/0",
     },
     {
       title: "Powerful U-Net Model",
       description:
         "Deep learning-based U-Net for accurate medical image segmentation.",
-      icon: <Icons.IconHelp className="w-8 h-8" />,
+      icon: <CircleHelp className="w-8 h-8" />,
       color: "from-purple-500/20 to-purple-500/0",
     },
     {
       title: "Intuitive Dashboard",
       description:
         "Real-time data visualization for seamless health monitoring.",
-      icon: <Icons.IconRouteAltLeft className="w-8 h-8" />,
+      icon: <Waypoints className="w-8 h-8" />,
       color: "from-green-500/20 to-green-500/0",
     },
     {
       title: "Reliable and Secure Platform",
       description:
         "High availability and robust security for sensitive patient data.",
-      icon: <Icons.IconCloud className="w-8 h-8" />,
+      icon: <Cloud className="w-8 h-8" />,
       color: "from-cyan-500/20 to-cyan-500/0",
     },
     {
       title: "Scalable & Efficient",
       description:
         "Designed to handle increasing data and users with high performance.",
-      icon: <Icons.IconCurrencyDollar className="w-8 h-8" />,
+      icon: <DollarSign className="w-8 h-8" />,
       color: "from-amber-500/20 to-amber-500/0",
     },
     {
       title: "24/7 Dedicated Support",
       description:
         "Round-the-clock access to reports, analytics, and insights anytime, anywhere.",
-      icon: <Icons.IconEaseInOut className="w-8 h-8" />,
+      icon: <Cable className="w-8 h-8" />,
       color: "from-indigo-500/20 to-indigo-500/0",
     },
   ];
