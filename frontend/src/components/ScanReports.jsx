@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -9,24 +9,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Add a function to check API server status at component load
-const checkApiServer = async () => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    const response = await fetch("http://localhost:4000/api/health", {
-      method: "GET",
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch (error) {
-    console.warn("API server check failed:", error.message);
-    return false;
-  }
-};
+const API_BASE_URL = "http://52.66.107.103";
 
 const ScanReports = () => {
   const navigate = useNavigate();
@@ -43,25 +26,11 @@ const ScanReports = () => {
   // Add state for custom alert modal
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [serverStatus, setServerStatus] = useState(null); // null = unknown, true = online, false = offline
   const [phoneNumber, setPhoneNumber] = useState(""); // Add this line
   const [formErrors, setFormErrors] = useState({
     patientName: '',
     phoneNumber: ''
   });
-
-  // Check API server status on component mount
-  useEffect(() => {
-    const checkServer = async () => {
-      const isOnline = await checkApiServer();
-      setServerStatus(isOnline);
-      if (!isOnline) {
-        console.warn("API server appears to be offline. Some features may not work correctly.");
-      }
-    };
-    
-    checkServer();
-  }, []);
 
   const navigateToDash = () => {
     navigate('/Dashboard');
@@ -100,8 +69,9 @@ const ScanReports = () => {
     const newScanType = e.target.value;
     setScanType(newScanType);
     const endpoint = newScanType === "Bone Tissue Scan" 
-      ? "http://127.0.0.1:5000/predict_bone_route"
-      : "http://127.0.0.1:5000/predict";
+    ? `${API_BASE_URL}/predict_bone_route`
+    : `${API_BASE_URL}/predict`;
+    
     console.log(`Scan type changed to: ${newScanType}`);
     console.log(`Endpoint will be: ${endpoint}`);
   };
@@ -120,7 +90,6 @@ const ScanReports = () => {
     if (!phone.trim()) {
       return "Phone number is required";
     }
-    // Regex for phone number: +91 followed by 10 digits or just 10 digits
     if (!/^(\+91[\-\s]?)?[0]?(91)?[789]\d{9}$/.test(phone.trim())) {
       return "Please enter a valid Indian phone number";
     }
@@ -166,8 +135,8 @@ const ScanReports = () => {
     
     // Determine which endpoint to use based on scan type
     const endpoint = scanType === "Bone Tissue Scan" 
-      ? "http://127.0.0.1:5000/predict_bone_route"
-      : "http://127.0.0.1:5000/predict";
+      ? `${API_BASE_URL}/predict_bone_route`
+      : `${API_BASE_URL}/predict`;
     
     console.log(`Processing ${filesToProcess.length} files with scan type: ${scanType}`);
     console.log(`Using endpoint: ${endpoint}`);
