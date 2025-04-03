@@ -38,6 +38,13 @@ const MedisureDashboard = () => {
   ]);
   
   useEffect(() => {
+    // Check for authentication token
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    
     const fetchTestsData = async () => {
       try {
         setIsLoading(true);
@@ -92,7 +99,7 @@ const MedisureDashboard = () => {
     };
 
     fetchTestsData();
-  }, []);
+  }, [navigate]);
   
   // Navigation functions
   const navigateToScanReports = () => {

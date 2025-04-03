@@ -8,6 +8,7 @@ import './App.css'
 import MedisureDashboard from './components/Dashboard'
 import ScanReports from './components/ScanReports'
 import HomePage from './components/HomePage/HomePage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -17,8 +18,16 @@ function App() {
         <Route path="/d" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<MedisureDashboard />} />
-        <Route path="/ScanReports" element={<ScanReports/>} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <MedisureDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/ScanReports" element={
+          <ProtectedRoute>
+            <ScanReports />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   )

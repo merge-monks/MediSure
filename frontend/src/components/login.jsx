@@ -21,7 +21,22 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await loginUser(formData);
+      const response = await loginUser(formData);
+      
+      // Store authentication token in localStorage
+      if (response && response.token) {
+        localStorage.setItem('authToken', response.token);
+        
+        // If "remember me" is not checked, set token to expire after session
+        if (!rememberMe) {
+          sessionStorage.setItem('authToken', response.token);
+          localStorage.removeItem('authToken');
+        }
+      } else {
+        // For demo purposes, if no real token is available
+        localStorage.setItem('authToken', 'demo-token-for-testing');
+      }
+      
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Invalid email or password");
