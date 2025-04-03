@@ -101,7 +101,6 @@ const MedisureDashboard = () => {
     fetchTestsData();
   }, [navigate]);
   
-  // Navigation functions
   const navigateToScanReports = () => {
     navigate("/ScanReports");
   };
@@ -114,7 +113,6 @@ const MedisureDashboard = () => {
     { name: "MRI", percentage: 20, color: "bg-indigo-400" },
   ];
 
-  // Recent tests data
   const recentTests = [
     {
       name: "CT Scan",

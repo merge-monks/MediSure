@@ -59,11 +59,11 @@ app.use(cookieParser());
 app.use(
   session({
     name: "AuthCookie",
-    secret: "secret", // Replaced process.env.COOKIE_SECRET
+    secret: "secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb+srv://Admin:8O7DIPsUZ1AG65hy@cluster0.rkdoows.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", // Replaced process.env.DB_URI
+      mongoUrl: "mongodb+srv://himanshuverma:RVlJtQyhCXP7z3eq@cluster0.ug6bo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", // Replaced process.env.DB_URI
       collectionName: "sessions",
     }),
     cookie: {

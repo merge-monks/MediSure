@@ -34,7 +34,6 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Enhanced console logging for dev tools
       console.group('Medisure Signup Attempt');
       console.log('📝 Form Data:', formData);
       console.log('👤 User Details:', {
@@ -63,7 +62,6 @@ const Signup = () => {
       });
       console.groupEnd();
 
-      // Comprehensive validation
       if (!formData.firstName || !formData.lastName) {
         setError("First name and last name are required");
         return;
