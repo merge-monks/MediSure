@@ -56,7 +56,7 @@ const Header = ({ navigateToScanReports, userData }) => {
             
             <span className="text-xs text-slate-500">{userData?.specialty || "Specialist"}</span>
           </div>
-          <ChevronRight size={16} className="ml-2 text-slate-400" />
+          {/* <<ChevronRight size={16} className="ml-2 text-slate-400" /> */}
         </div>
         <button 
           onClick={handleLogout}
