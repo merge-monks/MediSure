@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
     },
     practiceType: {
       type: String,
-      enum: ["solo", "group", "hospital", "other"],
+      enum: ["solo", "group", "hospital", "academic", "community", "telehealth", "other"],
     },
     ehr: {
       type: String,

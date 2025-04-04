@@ -19,28 +19,26 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
         if (data.success && data.reports && data.reports.length > 0) {
           setRecentTests(data.reports);
         } else {
-          // If no real data, fall back to default test data
-          setRecentTests(defaultTests);
+          // If no real data, set empty array instead of falling back to default
+          setRecentTests([]);
         }
       } catch (error) {
         console.error("Error fetching scan reports:", error);
         setError("Failed to load recent tests");
-        // Fall back to default test data on error
-        setRecentTests(defaultTests);
+        // Set empty array instead of falling back to default
+        setRecentTests([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchScanReports();
-  }, [defaultTests]);
+  }, []);
 
   // Function to handle navigating to all tests page
   const handleViewAll = () => {
     navigate("/all-tests");
   };
-
-  ;
 
   if (loading) {
     return (
@@ -123,9 +121,9 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
                   </div>
                 </div>
                 <button
-                onClick={() => {
-                    alert("Feature under maintenance")}}
-
+                  onClick={() => {
+                    alert("Feature under maintenance");
+                  }}
                   className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-lg transition-colors cursor-pointer"
                 >
                   <Send size={16} />
@@ -135,8 +133,8 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-8 text-slate-500">
-            No recent tests found
+          <div className="col-span-full text-center py-16 bg-white rounded-2xl shadow-sm">
+            <p className="text-slate-500">You haven't had any scans yet</p>
           </div>
         )}
       </div>

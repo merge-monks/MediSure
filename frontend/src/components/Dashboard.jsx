@@ -20,7 +20,7 @@ const MedisureDashboard = () => {
     {
       title: "Tests Today",
       value: "0",
-      trend: "+0%",
+      trend: "0%",
       color: "bg-cyan-100 text-cyan-600",
     },
     {
@@ -54,27 +54,24 @@ const MedisureDashboard = () => {
           // Update total tests count - all tests, not just today's
           const totalTests = data.reports.length;
           
-          // For demo purposes, we'll count all tests as "today's tests"
-          // In a real app, you would filter by today's date
-          
-          // Update analytics data with real test count
           setAnalyticsData(prevData => prevData.map((item, index) => {
             if (index === 0) { // Tests Today
               return {
                 ...item,
                 value: totalTests.toString(), // Use all tests count for demonstration
+                trend: totalTests > 0 ? "+15%" : "0%",
               };
             }
             return item;
           }));
         } else {
-          // Set a default value if API fails
+          // Show zero instead of default values
           setAnalyticsData(prevData => prevData.map((item, index) => {
             if (index === 0) { // Tests Today
               return {
                 ...item,
-                value: "19", // Default fallback value
-                trend: "+15%",
+                value: "0",
+                trend: "0%",
               };
             }
             return item;
@@ -82,13 +79,13 @@ const MedisureDashboard = () => {
         }
       } catch (error) {
         console.error("Error fetching analytics data:", error);
-        // Set a default value if API fails
+        // Show zero instead of default values
         setAnalyticsData(prevData => prevData.map((item, index) => {
           if (index === 0) { // Tests Today
             return {
               ...item,
-              value: "19", // Default fallback value
-              trend: "+15%",
+              value: "0",
+              trend: "0%",
             };
           }
           return item;
@@ -104,47 +101,6 @@ const MedisureDashboard = () => {
   const navigateToScanReports = () => {
     navigate("/ScanReports");
   };
-
-  // Tests data for the donut chart
-  const testsData = [
-    { name: "ULTRASOUND", percentage: 35, color: "bg-emerald-400" },
-    { name: "CT SCAN", percentage: 25, color: "bg-sky-400" },
-    { name: "X-RAY", percentage: 20, color: "bg-amber-400" },
-    { name: "MRI", percentage: 20, color: "bg-indigo-400" },
-  ];
-
-  const recentTests = [
-    {
-      name: "CT Scan",
-      image: "/api/placeholder/400/200",
-      color: "from-cyan-500 to-blue-500",
-      description: "Cranial examination",
-      date: "Jan 12, 2023",
-      status: "Completed",
-      patient: "Sarah Johnson, 42",
-      doctor: "Dr. Williams",
-    },
-    {
-      name: "X-Ray",
-      image: "/api/placeholder/400/200",
-      color: "from-purple-500 to-indigo-500",
-      description: "Thoracic cavity",
-      date: "Jan 10, 2023",
-      status: "Completed",
-      patient: "Robert Davis, 56",
-      doctor: "Dr. Chen",
-    },
-    {
-      name: "ECG",
-      image: "/api/placeholder/400/200",
-      color: "from-rose-400 to-red-500",
-      description: "Cardiac rhythm analysis",
-      date: "Jan 7, 2023",
-      status: "Completed",
-      patient: "Emma Wilson, 68",
-      doctor: "Dr. Patel",
-    },
-  ];
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
@@ -180,11 +136,11 @@ const MedisureDashboard = () => {
         <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <DoctorInfoCard />
           
-          <TestDistributionChart testsData={testsData} />
+          <TestDistributionChart testsData={[]} />
           
           <TestScheduleCalendar />
           
-          <RecentTestsSection recentTests={recentTests || []} />
+          <RecentTestsSection recentTests={[]} />
         </div>
       </div>
     </div>

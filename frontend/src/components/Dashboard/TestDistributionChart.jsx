@@ -7,6 +7,7 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalTests, setTotalTests] = useState(0);
+  const [noData, setNoData] = useState(false);
 
   useEffect(() => {
     const fetchTestData = async () => {
@@ -49,23 +50,19 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
           ];
           
           setTestsData(formattedData);
+          setNoData(false);
         } else {
-          // Fall back to default data if API doesn't return valid data
-          setTestsData(defaultTestsData || [
-            { name: "Brain Tumor Scan", percentage: 60, color: "bg-cyan-500" },
-            { name: "Bone Tissue Scan", percentage: 40, color: "bg-indigo-500" }
-          ]);
-          setTotalTests(428); // Default value
+          // Show no data message instead of default data
+          setNoData(true);
+          setTotalTests(0);
+          setTestsData([]);
         }
       } catch (error) {
         console.error("Error fetching test distribution data:", error);
         setError("Failed to load test distribution");
-        // Fall back to default data
-        setTestsData(defaultTestsData || [
-          { name: "Brain Tumor Scan", percentage: 60, color: "bg-cyan-500" },
-          { name: "Bone Tissue Scan", percentage: 40, color: "bg-indigo-500" }
-        ]);
-        setTotalTests(428); // Default value
+        setNoData(true);
+        setTotalTests(0);
+        setTestsData([]);
       } finally {
         setLoading(false);
       }
@@ -86,7 +83,17 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
     return (
       <div className="bg-white p-6 rounded-2xl shadow-sm">
         <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-          {error}. Using example data instead.
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (noData) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow" style={{minHeight: "420px"}}>
+        <div className="flex justify-center items-center h-full">
+          <p className="text-slate-500 text-center">You haven't had any scans yet</p>
         </div>
       </div>
     );

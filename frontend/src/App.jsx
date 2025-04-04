@@ -28,6 +28,11 @@ function App() {
             <ScanReports />
           </ProtectedRoute>
         } />
+        <Route path="/all-tests" element={
+          <ProtectedRoute>
+            <AllTestsPage />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   )

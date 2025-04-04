@@ -255,7 +255,7 @@ const TestScheduleCalendar = () => {
           </div>
         ) : (
           <div className="flex justify-center items-center h-32 text-slate-500 text-sm">
-            No Data Found
+            You haven't had any scans yet
           </div>
         )}
       </div>
