@@ -35,14 +35,15 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://localhost:3000',
   'http://3.110.188.8',
-  // Add any additional origins as needed
+  'http://65.0.122.218', // Add the server's own URL
+  '*'  // Allow all origins temporarily for debugging
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.match(/localhost/) || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       console.log('Blocked by CORS:', origin);
@@ -51,8 +52,12 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11) choke on 204
 }));
+
+// Add a specific handler for OPTIONS requests (preflight)
+app.options('*', cors());
 
 app.use(express.json());
 app.use(cookieParser());
