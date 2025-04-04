@@ -8,13 +8,15 @@ import {
   Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getUserId } from "../services/authService";
+import { createMedicalReport } from "../services/apiService";
 
 const API_BASE_URL = "http://52.66.107.103";
 
 const ScanReports = () => {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [uploadStatus, setUploadStatus] = useState(null); // null, 'uploading', 'success', 'error'
+  const [uploadStatus, setUploadStatus] = useState(null); 
   const fileInputRef = useRef(null);
   const [analysisResults, setAnalysisResults] = useState([]);
   const [analysisError, setAnalysisError] = useState(null);
@@ -23,10 +25,9 @@ const ScanReports = () => {
   const [scanType, setScanType] = useState("Brain Tumor Scan");
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
   const [predictions, setPredictions] = useState([]);
-  // Add state for custom alert modal
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // Add this line
+  const [phoneNumber, setPhoneNumber] = useState(""); 
   const [formErrors, setFormErrors] = useState({
     patientName: '',
     phoneNumber: ''
@@ -37,13 +38,12 @@ const ScanReports = () => {
   }
   
   const handleCancel = () => {
-    // Clear selected files and reset states
     setSelectedFiles([]);
     setUploadStatus(null);
     setAnalysisResults([]);
     setAnalysisError(null);
     setPatientName("");
-    setPhoneNumber(""); // Add this line
+    setPhoneNumber(""); 
     setScanType("Brain Tumor Scan");
     setAnalysisCompleted(false);
     setPredictions([]);
@@ -59,12 +59,10 @@ const ScanReports = () => {
       setAnalysisCompleted(false);
       setPredictions([]);
       
-      // Automatically start processing images when files are selected
       handleUpload(files);
     }
   };
 
-  // Update the setScanType to include console log
   const handleScanTypeChange = (e) => {
     const newScanType = e.target.value;
     setScanType(newScanType);
@@ -97,7 +95,6 @@ const ScanReports = () => {
   };
 
   const handleUpload = async (filesToProcess = selectedFiles) => {
-    // Validate all fields
     const nameError = validatePatientName(patientName);
     const phoneError = validatePhoneNumber(phoneNumber);
 
@@ -133,7 +130,6 @@ const ScanReports = () => {
     const results = [];
     const extractedPredictions = [];
     
-    // Determine which endpoint to use based on scan type
     const endpoint = scanType === "Bone Tissue Scan" 
       ? `${API_BASE_URL}/predict_bone_route`
       : `${API_BASE_URL}/predict`;
@@ -141,7 +137,6 @@ const ScanReports = () => {
     console.log(`Processing ${filesToProcess.length} files with scan type: ${scanType}`);
     console.log(`Using endpoint: ${endpoint}`);
     
-    // Process images sequentially
     for (let i = 0; i < filesToProcess.length; i++) {
       const file = filesToProcess[i];
       setProgress({ current: i + 1, total: filesToProcess.length });
@@ -152,7 +147,6 @@ const ScanReports = () => {
         formData.append("patientName", patientName);
         formData.append("scanType", scanType);
 
-        // Update UI to show which file is currently being processed
         setAnalysisResults([...results, {
           fileName: file.name,
           processing: true,
@@ -171,11 +165,9 @@ const ScanReports = () => {
           throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
 
-        // Get the prediction from X-Prediction header
         let prediction = response.headers.get('X-Prediction') || "Unknown";
         console.log(`Received prediction from header: ${prediction}`);
         
-        // Get the image blob and create URL
         const imageBlob = await response.blob();
         const imageUrl = URL.createObjectURL(imageBlob);
         
@@ -234,13 +226,25 @@ const ScanReports = () => {
     console.log("Tumor predictions being saved:", tumorTypes);
     console.log("Image URLs being saved:", processedImageUrls);
     
+    // Get the user ID
+    const userId = getUserId();
+    
+    if (!userId) {
+      setUploadStatus("error");
+      setAnalysisError("User ID not found. Please log in again.");
+      setAlertMessage("Authentication error: User ID not found. Please log in again.");
+      setShowAlert(true);
+      return;
+    }
+    
     const reportData = {
       patientName,
       phoneNumber,
       scanType,
       predictions: tumorTypes,
       reportImages: processedImageUrls, // Use the processed image URLs
-      originalFileNames: selectedFiles.map(file => file.name)
+      originalFileNames: selectedFiles.map(file => file.name),
+      userId // Include the user ID
     };
     
     console.log("Submitting report with data:", reportData);
@@ -248,67 +252,26 @@ const ScanReports = () => {
     setUploadStatus("uploading");
     
     try {
-      const response = await fetch("/api/medical/scanReports", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        mode: 'cors',
-        body: JSON.stringify(reportData)
-      });
-  
-      if (!response.ok) {
-        // Check specifically for CORS errors
-        if (response.status === 0) {
-          throw new Error("Network error - This might be due to CORS restrictions. Please check server configuration.");
-        }
-        
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          errorData = { message: errorText || "Unknown server error" };
-        }
-        throw new Error(errorData.message || "Failed to save report");
-      }
-  
-      // Rest of the success handling
-      // ...existing code...
-      let data;
-      const responseText = await response.text();
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.warn("Response is not valid JSON:", responseText);
-        data = { message: "Report saved but server returned invalid response" };
+      const response = await createMedicalReport(reportData);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to save report");
       }
       
       // Log success and show alert with more detailed message
-      console.log("Report saved successfully:", data);
+      console.log("Report saved successfully:", response);
       setUploadStatus("success");
-      setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! ${data.reportId ? `Report ID: ${data.reportId}` : ""}`);
+      setAlertMessage(`Medical scan data for ${patientName} has been successfully stored in the database! ${response.reportId ? `Report ID: ${response.reportId}` : ""}`);
       setShowAlert(true);
-  
+
     } catch (error) {
       console.error("Error saving report:", error);
       setUploadStatus("error");
-      // Provide more specific error message for CORS issues
-      const errorMessage = error.message.includes("CORS")
-        ? "Unable to connect to server due to CORS restrictions. Please contact administrator."
-        : error.message || "Failed to submit report to database";
+      const errorMessage = error.message || "Failed to submit report to database";
       setAnalysisError(errorMessage);
       setAlertMessage(`Error: ${errorMessage}. Please try again.`);
       setShowAlert(true);
     }
-  };
-
-  // Function to extract prediction from image title
-  const extractPredictionFromImage = async (imageUrl) => {
-    // For implementation simplicity, we'll return Unknown
-    // The real prediction will be extracted when the image loads in the UI
-    return "Unknown";
   };
 
   // Add function to clear the form after submission

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { User, AlertCircle } from "lucide-react";
 import { getCurrentUser } from "../../services/authService";
 
-const DoctorInfoCard = () => {
+const DoctorInfoCard = ({ userData: propUserData }) => {
   const [doctor, setDoctor] = useState({
     firstName: "",
     lastName: "",
@@ -20,7 +20,24 @@ const DoctorInfoCard = () => {
   useEffect(() => {
     const fetchDoctorData = async () => {
       try {
-        // Attempt to get user data from API
+        // If we already have user data from props, use it
+        if (propUserData) {
+          setDoctor({
+            firstName: propUserData.firstName || "",
+            lastName: propUserData.lastName || "",
+            title: propUserData.title || "",
+            specialty: propUserData.specialty || "",
+            department: propUserData.specialty || "",
+            hospital: propUserData.practiceName || "",
+            appointments: propUserData.appointments || 27,
+            expertise: propUserData.expertise || ["CT Scans", "MRI", "X-Ray"],
+            isOnline: true
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise, fetch user data
         const userData = await getCurrentUser();
         
         // Transform received data to match our component state
@@ -29,16 +46,15 @@ const DoctorInfoCard = () => {
           lastName: userData.lastName || "",
           title: userData.title || "",
           specialty: userData.specialty || "",
-          department: userData.specialty || "", // Using specialty as department if not provided separately
+          department: userData.specialty || "",
           hospital: userData.practiceName || "",
-          appointments: userData.appointments || 27, // Default value if not provided
-          expertise: userData.expertise || ["CT Scans", "MRI", "X-Ray"], // Default values if not provided
+          appointments: userData.appointments || 27,
+          expertise: userData.expertise || ["CT Scans", "MRI", "X-Ray"],
           isOnline: true
         });
         setLoading(false);
       } catch (err) {
         console.error("Error fetching doctor data:", err);
-        // Set error message and fallback to demo data
         setError("Unable to connect to server. Showing demo data.");
         
         // Fallback to demo data
@@ -59,7 +75,7 @@ const DoctorInfoCard = () => {
     };
 
     fetchDoctorData();
-  }, []);
+  }, [propUserData]);
 
   if (loading) {
     return (

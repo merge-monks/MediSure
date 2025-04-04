@@ -1,22 +1,33 @@
 const API_URL = '/api/auth';
 
-export const loginUser = async (credentials) => {
-  const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(credentials),
-  });
-  
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.error || 'Login failed');
+export const loginUser = async (loginData) => {
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(loginData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Login failed');
+    }
+
+    const data = await response.json();
+    
+    // Store user ID if available in the response
+    if (data && data.userId) {
+      localStorage.setItem('userId', data.userId);
+    }
+    
+    return { success: true, token: 'auth-token', userId: data.userId || data.result };
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
-  
-  return data;
 };
 
 export const signupUser = async (userData) => {
@@ -90,12 +101,19 @@ export const getCurrentUser = async () => {
     }
     
     const data = await response.json();
+    
+    // Store the user ID in localStorage for later use
+    if (data && data._id) {
+      localStorage.setItem('userId', data._id);
+    }
+    
     return data;
   } catch (error) {
     console.error('Error in getCurrentUser:', error);
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.MODE !== 'production') {
       console.warn('Using mock data for doctor info');
-      return {
+      const mockUser = {
+        _id: "mockuser123", // Adding a mock ID
         firstName: "Manas",
         lastName: "Kumar",
         title: "MD",
@@ -104,7 +122,14 @@ export const getCurrentUser = async () => {
         expertise: ["CT Scans", "MRI", "X-Ray"],
         appointments: 27
       };
+      // Store the mock user ID
+      localStorage.setItem('userId', mockUser._id);
+      return mockUser;
     }
     throw error;
   }
+};
+
+export const getUserId = () => {
+  return localStorage.getItem('userId') || null;
 };

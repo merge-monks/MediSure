@@ -18,7 +18,7 @@ clientWhatsapp.on('ready', () => {
 // Controller for handling scan report operations
 export const createScanReport = async (req, res) => {
   try {
-    const { patientName, scanType, predictions, images } = req.body;
+    const { patientName, scanType, predictions, images, userId } = req.body;
 
     // Basic validation
     if (!patientName || !scanType) {
@@ -41,13 +41,14 @@ export const createScanReport = async (req, res) => {
       validScanType = "MRI scan"; // Map to valid enum for database
     }
 
-    // Create a new scan report
+    // Create a new scan report with user ID
     const newScanReport = new ScanReport({
       patientName,
       scanType: validScanType,
-      originalScanType, // Store the original name
+      originalScanType,
       predictions: predictions || [],
       images: images || [],
+      userId: userId || req.session.userId // Use the provided userId or from session
     });
 
     // Save to database
@@ -72,7 +73,18 @@ export const createScanReport = async (req, res) => {
 // Get all scan reports
 export const getAllScanReports = async (req, res) => {
   try {
-    const reports = await ScanReport.find().sort({ timestamp: -1 });
+    // Get userId from query parameter or session
+    const userId = req.query.userId || req.session.userId;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required to fetch reports",
+      });
+    }
+
+    // Query reports filtered by userId
+    const reports = await ScanReport.find({ userId }).sort({ timestamp: -1 });
 
     // Transform data to match frontend expectations with focus on key information
     const formattedReports = reports.map((report) => {

@@ -163,8 +163,11 @@ export const login = async (req, res) => {
 
   req.session.userId = user._id;
 
-  //If success return 200 okk
-  res.status(200).json({ result: req.session.userId });
+  //If success return 200 ok with user ID
+  res.status(200).json({ 
+    result: req.session.userId,
+    userId: user._id // Include the user ID in response
+  });
 };
 
 //Logout of account

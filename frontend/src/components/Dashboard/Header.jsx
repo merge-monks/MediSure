@@ -1,12 +1,24 @@
 import React from "react";
 import { Plus, Bell, ChevronRight } from "lucide-react";
 
-const Header = ({ navigateToScanReports }) => {
+const Header = ({ navigateToScanReports, userData }) => {
+  // Get user's initials for avatar
+  const getInitials = () => {
+    if (!userData) return "DR";
+    return `${userData.firstName?.charAt(0) || ''}${userData.lastName?.charAt(0) || ''}`;
+  };
+
+  // Get user's full name
+  const getFullName = () => {
+    if (!userData) return "Doctor";
+    return `Dr. ${userData.firstName || ''} ${userData.lastName || ''}`;
+  };
+
   return (
     <header className="bg-white p-4 lg:p-6 flex justify-between items-center shadow-sm sticky top-0 z-10">
       <div className="ml-8 lg:ml-0">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-          Hello, Doctor!
+          Hello, {userData?.firstName || "Doctor"}!
         </h1>
       </div>
 
@@ -26,14 +38,14 @@ const Header = ({ navigateToScanReports }) => {
         </div>
         <div className="flex items-center ml-2 bg-gradient-to-r from-slate-50 to-cyan-50 p-1.5 rounded-xl shadow-sm">
           <div className="bg-cyan-600 to-blue-600 text-white rounded-lg w-9 h-9 flex items-center justify-center">
-            <span className="text-xs font-bold">MK</span>
+            <span className="text-xs font-bold">{getInitials()}</span>
           </div>
           <div className="ml-3">
             <span className="text-sm font-medium text-slate-700 block leading-tight">
-              Dr. Manas Kumar
+              {getFullName()}
             </span>
             
-            <span className="text-xs text-slate-500">Radiology</span>
+            <span className="text-xs text-slate-500">{userData?.specialty || "Specialist"}</span>
           </div>
           <ChevronRight size={16} className="ml-2 text-slate-400" />
         </div>

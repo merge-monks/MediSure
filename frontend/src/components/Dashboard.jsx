@@ -11,6 +11,7 @@ import {
   RecentTestsSection
 } from "./Dashboard/index";
 import { getMedicalReports } from "../services/apiService";
+import { getCurrentUser, getUserId } from "../services/authService";
 
 const MedisureDashboard = () => {
   const navigate = useNavigate();
@@ -36,38 +37,67 @@ const MedisureDashboard = () => {
       value: "100%",
     },
   ]);
-  
+  const [userData, setUserData] = useState(null);
+
   useEffect(() => {
-    // Check for authentication token
+    // Check for authentication token and userId
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    if (!token) {
+    const userId = getUserId();
+    
+    if (!token || !userId) {
       navigate('/login');
       return;
     }
     
+    // Fetch user data
+    const fetchUserData = async () => {
+      try {
+        const data = await getCurrentUser();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    
+    // Fetch tests data for the specific user
     const fetchTestsData = async () => {
       try {
         setIsLoading(true);
         const data = await getMedicalReports();
         
         if (data.success && data.reports) {
-          // Update total tests count - all tests, not just today's
+          // Update analytics with user-specific data
           const totalTests = data.reports.length;
           
           setAnalyticsData(prevData => prevData.map((item, index) => {
             if (index === 0) { // Tests Today
               return {
                 ...item,
-                value: totalTests.toString(), // Use all tests count for demonstration
+                value: totalTests.toString(), 
                 trend: totalTests > 0 ? "+15%" : "0%",
+              };
+            } else if (index === 1) { // Pending Analysis
+              const pendingTests = data.reports.filter(report => 
+                report.status === 'pending' || report.status === 'in-progress'
+              ).length;
+              return {
+                ...item,
+                value: pendingTests.toString()
+              };
+            } else if (index === 2) { // New Patients
+              // Count unique patients
+              const uniquePatients = new Set(data.reports.map(report => report.patient)).size;
+              return {
+                ...item,
+                value: uniquePatients.toString()
               };
             }
             return item;
           }));
         } else {
-          // Show zero instead of default values
+          // Show zero for this specific user
           setAnalyticsData(prevData => prevData.map((item, index) => {
-            if (index === 0) { // Tests Today
+            if ([0, 1, 2].includes(index)) {
               return {
                 ...item,
                 value: "0",
@@ -79,9 +109,9 @@ const MedisureDashboard = () => {
         }
       } catch (error) {
         console.error("Error fetching analytics data:", error);
-        // Show zero instead of default values
+        // Reset analytics for this user
         setAnalyticsData(prevData => prevData.map((item, index) => {
-          if (index === 0) { // Tests Today
+          if ([0, 1, 2].includes(index)) {
             return {
               ...item,
               value: "0",
@@ -95,6 +125,7 @@ const MedisureDashboard = () => {
       }
     };
 
+    fetchUserData();
     fetchTestsData();
   }, [navigate]);
   
@@ -123,7 +154,10 @@ const MedisureDashboard = () => {
           ></div>
         )}
 
-        <Header navigateToScanReports={navigateToScanReports} />
+        <Header 
+          navigateToScanReports={navigateToScanReports} 
+          userData={userData} // Pass user data to header
+        />
 
         {isLoading ? (
           <div className="flex justify-center items-center p-6">
@@ -134,7 +168,7 @@ const MedisureDashboard = () => {
         )}
 
         <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <DoctorInfoCard />
+          <DoctorInfoCard userData={userData} /> {/* Pass user data to doctor info card */}
           
           <TestDistributionChart testsData={[]} />
           
