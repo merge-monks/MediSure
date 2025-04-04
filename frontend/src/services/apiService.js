@@ -4,7 +4,13 @@ const API_BASE_URL = '/api';
 // Medical API endpoints
 export const getMedicalReports = async () => {
   try {
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     const response = await fetch(`${API_BASE_URL}/medical/scanReports`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
       credentials: 'include', // Send cookies if using session auth
     });
     

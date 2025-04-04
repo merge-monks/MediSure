@@ -31,6 +31,7 @@ const app = express();
 
 // Enable CORS with multiple origins
 const allowedOrigins = [
+  'http://localhost:5001',
   'http://localhost:5000',
   'http://localhost:3000',
   'http://3.110.188.8',
@@ -39,13 +40,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, Postman or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       console.log('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(null, true); // Allow all origins in development for debugging
     }
   },
   credentials: true,

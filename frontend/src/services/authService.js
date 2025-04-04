@@ -30,25 +30,40 @@ export const signupUser = async (userData) => {
       body: JSON.stringify(userData),
     });
     
-    const data = await response.json();
-    
-    if (!response.ok) {
-      // Handle specific HTTP status codes
-      switch (response.status) {
-        case 400:
-          throw new Error(data.error || 'Invalid input data');
-        case 409:
-          throw new Error(data.error || 'User already exists');
-        case 500:
-          console.error('Server error details:', data);
-          throw new Error('Server error. Please try again later.');
-        default:
-          throw new Error(data.error || `Error: ${response.status}`);
+    // Check if the response is JSON before trying to parse it
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Handle specific HTTP status codes
+        switch (response.status) {
+          case 400:
+            throw new Error(data.error || 'Invalid input data');
+          case 409:
+            throw new Error(data.error || 'User already exists');
+          case 500:
+            console.error('Server error details:', data);
+            throw new Error('Server error. Please try again later.');
+          default:
+            throw new Error(data.error || `Error: ${response.status}`);
+        }
       }
+      
+      return data;
+    } else {
+      // Handle non-JSON responses
+      const text = await response.text();
+      console.error('Received non-JSON response:', text.substring(0, 100) + '...');
+      throw new Error(`Server returned an invalid response (${response.status}). Please try again later.`);
+    }
+  } catch (error) {
+    // Check if this is a JSON parsing error
+    if (error.name === 'SyntaxError' && error.message.includes('Unexpected token')) {
+      console.error('JSON parsing error:', error);
+      throw new Error('Server returned an invalid response. Please try again later.');
     }
     
-    return data;
-  } catch (error) {
     // Handle network errors
     if (!error.message) {
       throw new Error('Network error. Please check your connection.');
