@@ -75,6 +75,16 @@ app.use(
   })
 );
 
+// Default route to check if server is running
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Server is up and running",
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
 app.use("/api/auth", authRoute);
 app.use("/api/medical", medicalRoute);  // Add the medical routes
 // app.use("/api/profile", profileRoute);
