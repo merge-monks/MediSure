@@ -15,17 +15,18 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
         setLoading(true);
         // Use the centralized API service instead of direct fetch
         const data = await getMedicalReports();
+        console.log("Fetched reports for current user:", data);
 
         if (data.success && data.reports && data.reports.length > 0) {
           setRecentTests(data.reports);
         } else {
-          // If no real data, set empty array instead of falling back to default
+          // If no real data, set empty array
           setRecentTests([]);
         }
       } catch (error) {
         console.error("Error fetching scan reports:", error);
         setError("Failed to load recent tests");
-        // Set empty array instead of falling back to default
+        // Set empty array on error
         setRecentTests([]);
       } finally {
         setLoading(false);
@@ -70,7 +71,8 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
         </h2>
         <button
           onClick={handleViewAll}
-          className="text-sm text-cyan-600 font-medium flex items-center hover:text-cyan-700 transition-colors"
+          className={`text-sm text-cyan-600 font-medium flex items-center hover:text-cyan-700 transition-colors ${displayedTests.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={displayedTests.length === 0}
         >
           View All <ArrowRight size={16} className="ml-1" />
         </button>
@@ -133,8 +135,16 @@ const RecentTestsSection = ({ recentTests: defaultTests }) => {
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-16 bg-white rounded-2xl shadow-sm">
-            <p className="text-slate-500">You haven't had any scans yet</p>
+          <div className="col-span-full bg-white rounded-2xl shadow-sm py-16 px-6 text-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <Activity size={32} className="text-slate-400" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-700 mb-2">No tests analyzed yet</h3>
+              <p className="text-slate-500 max-w-sm">
+                You haven't analyzed any medical scans yet. Upload your scans using the "Scan Reports" button.
+              </p>
+            </div>
           </div>
         )}
       </div>

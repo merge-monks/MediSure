@@ -6,19 +6,13 @@ const API_URL = (typeof window !== 'undefined' && window.env && window.env.REACT
 
 export const getMedicalReports = async () => {
   try {
-    const userId = getUserId();
-    
-    if (!userId) {
-      console.warn('User ID not found, cannot fetch reports');
-      return { success: false, reports: [] };
-    }
-    
-    const response = await fetch(`${API_URL}/medical/scanReports?userId=${userId}`, {
+    // No need to manually pass userId - the server will identify the user from the session cookie
+    const response = await fetch(`${API_URL}/medical/scanReports`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Important for cookies
     });
 
     if (!response.ok) {
@@ -39,39 +33,26 @@ export const getMedicalReports = async () => {
 
 export const createMedicalReport = async (reportData) => {
   try {
-    const userId = getUserId();
-    
-    if (!userId) {
-      console.warn('User ID not found, cannot create report');
-      return { success: false };
-    }
-    
-    const reportWithUserId = {
-      ...reportData,
-      userId
-    };
-    
+    // No need to manually add userId - it will be extracted from session
     const response = await fetch(`${API_URL}/medical/scanReports`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
-      body: JSON.stringify(reportWithUserId)
+      credentials: 'include', // Important for cookies
+      body: JSON.stringify(reportData),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create report: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error: ${response.status}`);
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error creating medical report:', error);
-    return { 
-      success: false, 
-      message: error.message
-    };
+    throw error;
   }
 };
 

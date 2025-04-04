@@ -23,17 +23,7 @@ const Login = () => {
     try {
       const response = await loginUser(formData);
       
-      if (response && response.token) {
-        localStorage.setItem('authToken', response.token);
-        
-        if (!rememberMe) {
-          sessionStorage.setItem('authToken', response.token);
-          localStorage.removeItem('authToken');
-        }
-      } else {
-        localStorage.setItem('authToken', 'demo-token-for-testing');
-      }
-      
+      // No need to manage tokens manually - using cookies now
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Invalid email or password");

@@ -1,7 +1,11 @@
 import React from "react";
-import { Plus, Bell, ChevronRight } from "lucide-react";
+import { Plus, Bell, ChevronRight, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../services/authService";
 
 const Header = ({ navigateToScanReports, userData }) => {
+  const navigate = useNavigate();
+
   // Get user's initials for avatar
   const getInitials = () => {
     if (!userData) return "DR";
@@ -12,6 +16,11 @@ const Header = ({ navigateToScanReports, userData }) => {
   const getFullName = () => {
     if (!userData) return "Doctor";
     return `Dr. ${userData.firstName || ''} ${userData.lastName || ''}`;
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
   return (
@@ -49,6 +58,13 @@ const Header = ({ navigateToScanReports, userData }) => {
           </div>
           <ChevronRight size={16} className="ml-2 text-slate-400" />
         </div>
+        <button 
+          onClick={handleLogout}
+          className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors flex items-center"
+          title="Logout"
+        >
+          <LogOut size={18} className="text-slate-600" />
+        </button>
       </div>
     </header>
   );

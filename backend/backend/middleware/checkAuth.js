@@ -20,7 +20,7 @@ const checkAuth = async (req, res, next) => {
     if (!sessionId && !token) {
       return res.status(401).json({ 
         authenticated: false, 
-        error: "No authentication provided" 
+        error: "Please log in to continue" 
       });
     }
     
@@ -52,10 +52,12 @@ const checkAuth = async (req, res, next) => {
     // Set the user on the request object
     req.user = user;
     
+    // If this is just a middleware in a chain, continue
     if (next) {
       return next();
     }
     
+    // If this is the final handler (e.g., for /api/auth/checkAuth endpoint)
     return res.status(200).json({
       authenticated: true,
       user: {

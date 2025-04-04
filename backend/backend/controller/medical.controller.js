@@ -18,13 +18,23 @@ clientWhatsapp.on('ready', () => {
 // Controller for handling scan report operations
 export const createScanReport = async (req, res) => {
   try {
-    const { patientName, scanType, predictions, images, userId } = req.body;
+    const { patientName, scanType, predictions, images, phoneNumber } = req.body;
 
     // Basic validation
     if (!patientName || !scanType) {
       return res.status(400).json({
         success: false,
         message: "Patient name and scan type are required",
+      });
+    }
+
+    // Get userId from session or authenticated user
+    const userId = req.session.userId || (req.user && req.user._id);
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Please log in again.",
       });
     }
 
@@ -48,11 +58,13 @@ export const createScanReport = async (req, res) => {
       originalScanType,
       predictions: predictions || [],
       images: images || [],
-      userId: userId || req.session.userId // Use the provided userId or from session
+      userId: userId, // Use the user ID from session
+      phoneNumber
     });
 
     // Save to database
     await newScanReport.save();
+    console.log(`Created new scan report for user ${userId} with ID ${newScanReport._id}`);
 
     res.status(201).json({
       success: true,
@@ -73,18 +85,19 @@ export const createScanReport = async (req, res) => {
 // Get all scan reports
 export const getAllScanReports = async (req, res) => {
   try {
-    // Get userId from query parameter or session
-    const userId = req.query.userId || req.session.userId;
+    // Get userId from session or authenticated user
+    const userId = req.session.userId || (req.user && req.user._id);
     
     if (!userId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: "User ID is required to fetch reports",
+        message: "Authentication required. Please log in again.",
       });
     }
 
-    // Query reports filtered by userId
-    const reports = await ScanReport.find({ userId }).sort({ timestamp: -1 });
+    // Query reports filtered by userId - ensure proper MongoDB ObjectId comparison
+    const reports = await ScanReport.find({ userId: userId.toString() }).sort({ timestamp: -1 });
+    console.log(`Fetched ${reports.length} reports for user ${userId}`);
 
     // Transform data to match frontend expectations with focus on key information
     const formattedReports = reports.map((report) => {
@@ -126,6 +139,7 @@ export const getAllScanReports = async (req, res) => {
         date: date,
         status: "Completed",
         patient: report.patientName,
+        predictions: report.predictions,  // Include the full predictions array
         doctor: "Dr. Assigned",
       };
     });

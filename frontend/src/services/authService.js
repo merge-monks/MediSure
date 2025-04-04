@@ -1,5 +1,8 @@
 const API_URL = '/api/auth';
 
+// Session-based user information
+let currentUser = null;
+
 export const loginUser = async (loginData) => {
   try {
     const response = await fetch(`${API_URL}/login`, {
@@ -7,7 +10,7 @@ export const loginUser = async (loginData) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Important for cookies
       body: JSON.stringify(loginData)
     });
 
@@ -18,10 +21,11 @@ export const loginUser = async (loginData) => {
 
     const data = await response.json();
     
-    // Store user ID if available in the response
-    if (data && data.userId) {
-      localStorage.setItem('userId', data.userId);
-    }
+    // Store user info in memory but rely on cookies for auth
+    currentUser = {
+      userId: data.userId || data.result,
+      authenticated: true
+    };
     
     return { success: true, token: 'auth-token', userId: data.userId || data.result };
   } catch (error) {
@@ -41,13 +45,11 @@ export const signupUser = async (userData) => {
       body: JSON.stringify(userData),
     });
     
-    // Check if the response is JSON before trying to parse it
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       
       if (!response.ok) {
-        // Handle specific HTTP status codes
         switch (response.status) {
           case 400:
             throw new Error(data.error || 'Invalid input data');
@@ -63,19 +65,16 @@ export const signupUser = async (userData) => {
       
       return data;
     } else {
-      // Handle non-JSON responses
       const text = await response.text();
       console.error('Received non-JSON response:', text.substring(0, 100) + '...');
       throw new Error(`Server returned an invalid response (${response.status}). Please try again later.`);
     }
   } catch (error) {
-    // Check if this is a JSON parsing error
     if (error.name === 'SyntaxError' && error.message.includes('Unexpected token')) {
       console.error('JSON parsing error:', error);
       throw new Error('Server returned an invalid response. Please try again later.');
     }
     
-    // Handle network errors
     if (!error.message) {
       throw new Error('Network error. Please check your connection.');
     }
@@ -84,28 +83,33 @@ export const signupUser = async (userData) => {
 };
 
 export const getCurrentUser = async () => {
+  // If we already fetched user, return it
+  if (currentUser && currentUser.details) {
+    return currentUser.details;
+  }
+
   try {
     const response = await fetch(`${API_URL}/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Important for cookies
     });
     
-    // Check if response is ok and content-type is application/json
     const contentType = response.headers.get('content-type');
     if (!response.ok || !contentType || !contentType.includes('application/json')) {
-      // If not JSON or status is not OK, throw error
       throw new Error(`Failed to fetch user data: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
     
-    // Store the user ID in localStorage for later use
-    if (data && data._id) {
-      localStorage.setItem('userId', data._id);
-    }
+    // Store the user data in memory
+    currentUser = {
+      userId: data._id,
+      authenticated: true,
+      details: data
+    };
     
     return data;
   } catch (error) {
@@ -113,7 +117,7 @@ export const getCurrentUser = async () => {
     if (import.meta.env.MODE !== 'production') {
       console.warn('Using mock data for doctor info');
       const mockUser = {
-        _id: "mockuser123", // Adding a mock ID
+        _id: "mockuser123",
         firstName: "Manas",
         lastName: "Kumar",
         title: "MD",
@@ -122,14 +126,48 @@ export const getCurrentUser = async () => {
         expertise: ["CT Scans", "MRI", "X-Ray"],
         appointments: 27
       };
-      // Store the mock user ID
-      localStorage.setItem('userId', mockUser._id);
+      
+      // Store mock data in memory
+      currentUser = {
+        userId: mockUser._id,
+        authenticated: true,
+        details: mockUser
+      };
+      
       return mockUser;
     }
     throw error;
   }
 };
 
-export const getUserId = () => {
-  return localStorage.getItem('userId') || null;
+export const getUserId = async () => {
+  // Try to get current user if we don't have it yet
+  if (!currentUser || !currentUser.userId) {
+    try {
+      const userData = await getCurrentUser();
+      return userData._id;
+    } catch (error) {
+      console.error("Error getting user ID:", error);
+      return null;
+    }
+  }
+  
+  return currentUser.userId;
+};
+
+export const logout = async () => {
+  try {
+    await fetch(`${API_URL}/logout`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    // Clear in-memory user data
+    currentUser = null;
+    
+    return true;
+  } catch (error) {
+    console.error("Logout error:", error);
+    return false;
+  }
 };

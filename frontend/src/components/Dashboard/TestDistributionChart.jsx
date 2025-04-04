@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Filter, Loader } from "lucide-react";
+import { Filter, Loader, PieChart } from "lucide-react";
 import { getMedicalReports } from "../../services/apiService";
 
 const TestDistributionChart = ({ testsData: defaultTestsData }) => {
@@ -27,10 +27,10 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
           };
           
           reports.forEach(report => {
-            const testName = report.name;
-            if (testName.includes("Brain") || testName.includes("brain")) {
+            const testName = report.name ? report.name.toLowerCase() : '';
+            if (testName.includes("brain") || report.scanType === "MRI scan") {
               testCounts["Brain Tumor Scan"]++;
-            } else if (testName.includes("Bone") || testName.includes("bone")) {
+            } else if (testName.includes("bone") || report.scanType === "CT scan") {
               testCounts["Bone Tissue Scan"]++;
             }
           });
@@ -92,8 +92,18 @@ const TestDistributionChart = ({ testsData: defaultTestsData }) => {
   if (noData) {
     return (
       <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow" style={{minHeight: "420px"}}>
-        <div className="flex justify-center items-center h-full">
-          <p className="text-slate-500 text-center">You haven't had any scans yet</p>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-bold text-slate-700">Test Distribution</h2>
+        </div>
+        
+        <div className="flex flex-col justify-center items-center h-full">
+          <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <PieChart size={32} className="text-slate-400" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-700 mb-2">No test distribution data</h3>
+          <p className="text-slate-500 text-center max-w-xs">
+            You haven't analyzed any medical scans yet. Your test distribution will appear here.
+          </p>
         </div>
       </div>
     );

@@ -8,7 +8,6 @@ import {
   Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getUserId } from "../services/authService";
 import { createMedicalReport } from "../services/apiService";
 
 const API_BASE_URL = "http://52.66.107.103";
@@ -226,25 +225,14 @@ const ScanReports = () => {
     console.log("Tumor predictions being saved:", tumorTypes);
     console.log("Image URLs being saved:", processedImageUrls);
     
-    // Get the user ID
-    const userId = getUserId();
-    
-    if (!userId) {
-      setUploadStatus("error");
-      setAnalysisError("User ID not found. Please log in again.");
-      setAlertMessage("Authentication error: User ID not found. Please log in again.");
-      setShowAlert(true);
-      return;
-    }
-    
     const reportData = {
       patientName,
       phoneNumber,
       scanType,
       predictions: tumorTypes,
       reportImages: processedImageUrls, // Use the processed image URLs
-      originalFileNames: selectedFiles.map(file => file.name),
-      userId // Include the user ID
+      originalFileNames: selectedFiles.map(file => file.name)
+      // No need to manually include userId - the backend will extract it from the session
     };
     
     console.log("Submitting report with data:", reportData);

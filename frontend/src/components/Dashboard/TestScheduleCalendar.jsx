@@ -59,15 +59,27 @@ const TestScheduleCalendar = () => {
       try {
         setIsLoading(true);
         const data = await getMedicalReports();
-        if (data.success && data.reports) {
-          setAllTests(data.reports);
+        console.log("Calendar fetched reports:", data);
+        
+        if (data.success) {
+          // Always set allTests to an array, even if empty
+          setAllTests(data.reports || []);
           
-          // Immediately filter for today's tests
-          const todaysTests = filterTestsByDate(today, data.reports);
-          setFilteredTests(todaysTests);
+          // Only filter if there are reports
+          if (data.reports && data.reports.length > 0) {
+            const todaysTests = filterTestsByDate(today, data.reports);
+            setFilteredTests(todaysTests);
+          } else {
+            setFilteredTests([]);
+          }
+        } else {
+          setAllTests([]);
+          setFilteredTests([]);
         }
       } catch (error) {
         console.error("Error fetching tests:", error);
+        setAllTests([]);
+        setFilteredTests([]);
       } finally {
         setIsLoading(false);
       }
@@ -254,8 +266,13 @@ const TestScheduleCalendar = () => {
             ))}
           </div>
         ) : (
-          <div className="flex justify-center items-center h-32 text-slate-500 text-sm">
-            You haven't had any scans yet
+          <div className="flex flex-col justify-center items-center h-32 text-center">
+            <div className="text-slate-400 mb-2">
+              <CalendarIcon size={24} />
+            </div>
+            <p className="text-slate-500 text-sm">
+              No scans scheduled for this date
+            </p>
           </div>
         )}
       </div>

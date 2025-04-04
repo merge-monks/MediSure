@@ -65,9 +65,9 @@ const MedisureDashboard = () => {
         setIsLoading(true);
         const data = await getMedicalReports();
         
-        if (data.success && data.reports) {
-          // Update analytics with user-specific data
-          const totalTests = data.reports.length;
+        if (data.success) {
+          // Always initialize with zeros for a new user
+          const totalTests = data.reports ? data.reports.length : 0;
           
           setAnalyticsData(prevData => prevData.map((item, index) => {
             if (index === 0) { // Tests Today
@@ -77,16 +77,16 @@ const MedisureDashboard = () => {
                 trend: totalTests > 0 ? "+15%" : "0%",
               };
             } else if (index === 1) { // Pending Analysis
-              const pendingTests = data.reports.filter(report => 
+              const pendingTests = data.reports ? data.reports.filter(report => 
                 report.status === 'pending' || report.status === 'in-progress'
-              ).length;
+              ).length : 0;
               return {
                 ...item,
                 value: pendingTests.toString()
               };
             } else if (index === 2) { // New Patients
               // Count unique patients
-              const uniquePatients = new Set(data.reports.map(report => report.patient)).size;
+              const uniquePatients = data.reports ? new Set(data.reports.map(report => report.patient)).size : 0;
               return {
                 ...item,
                 value: uniquePatients.toString()
@@ -96,33 +96,28 @@ const MedisureDashboard = () => {
           }));
         } else {
           // Show zero for this specific user
-          setAnalyticsData(prevData => prevData.map((item, index) => {
-            if ([0, 1, 2].includes(index)) {
-              return {
-                ...item,
-                value: "0",
-                trend: "0%",
-              };
-            }
-            return item;
-          }));
+          resetAnalyticsData();
         }
       } catch (error) {
         console.error("Error fetching analytics data:", error);
         // Reset analytics for this user
-        setAnalyticsData(prevData => prevData.map((item, index) => {
-          if ([0, 1, 2].includes(index)) {
-            return {
-              ...item,
-              value: "0",
-              trend: "0%",
-            };
-          }
-          return item;
-        }));
+        resetAnalyticsData();
       } finally {
         setIsLoading(false);
       }
+    };
+
+    const resetAnalyticsData = () => {
+      setAnalyticsData(prevData => prevData.map((item, index) => {
+        if ([0, 1, 2].includes(index)) {
+          return {
+            ...item,
+            value: "0",
+            trend: "0%",
+          };
+        }
+        return item;
+      }));
     };
 
     fetchUserData();
