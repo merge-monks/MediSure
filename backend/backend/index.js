@@ -29,52 +29,25 @@ clientWhatsapp.initialize();
 configDotenv();
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5001',
-  'http://localhost:5000',
-  'http://localhost:3000',
-  'http://65.0.122.218'
-];
-
+// Enable CORS with multiple origins
 app.use(cors({
-  origin: function (origin, callback) {
-    console.log('Origin:', origin); // Log the origin for debugging
-    if (!origin) return callback(null, true); // Allow non-browser requests
-    if (allowedOrigins.includes(origin) || origin.match(/localhost/) || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      console.log('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true, // Allow cookies and credentials
+  origin: ["http://localhost:5000", "http://localhost:3000", "http://localhost:5001", "http://3.110.188.8"],
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200 // For legacy browsers
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
-});
 
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(
   session({
-    origin:'*',
-    creadentiaols: true,
-    proxy: true,
     name: "AuthCookie",
-    secret: "secret",
+    secret: "secret", // Replaced process.env.COOKIE_SECRET
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb+srv://himanshuverma:RVlJtQyhCXP7z3eq@cluster0.ug6bo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", // Replaced process.env.DB_URI
+      mongoUrl: "mongodb+srv://Admin:8O7DIPsUZ1AG65hy@cluster0.rkdoows.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", // Replaced process.env.DB_URI
       collectionName: "sessions",
     }),
     cookie: {
@@ -84,16 +57,6 @@ app.use(
     },
   })
 );
-
-// Default route to check if server is running
-app.get("/", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "Server is up and running",
-    timestamp: new Date(),
-    environment: process.env.NODE_ENV || "development"
-  });
-});
 
 app.use("/api/auth", authRoute);
 app.use("/api/medical", medicalRoute);  // Add the medical routes
