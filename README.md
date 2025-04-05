@@ -4,6 +4,12 @@ A comprehensive full-stack application for medical image analysis, specializing 
 
 ---
 
+## Documentation
+
+- **[U-Net Model Overview](./model.md)**: Detailed explanation of the U-Net architecture, its application in this project, and code snippets for better understanding.
+
+---
+
 ## Project Structure
 
 ```
@@ -14,7 +20,7 @@ A comprehensive full-stack application for medical image analysis, specializing 
 │   │   ├── middleware/    # Express middlewares
 │   │   ├── models/        # Data models
 │   │   ├── routes/        # API routes
-│   │   └── utils/         # Utility functions
+│   └── utils/             # Utility functions
 │   ├── python/            # Machine Learning components
 │   │   ├── bone.py        # Bone analysis model
 │   │   ├── tumor.ipynb    # Tumor detection notebook
