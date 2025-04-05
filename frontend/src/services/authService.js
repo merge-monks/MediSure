@@ -27,6 +27,10 @@ export const loginUser = async (loginData) => {
       authenticated: true
     };
     
+    // Store auth token in localStorage for persistence across page refreshes
+    localStorage.setItem('authToken', 'auth-token');
+    localStorage.setItem('userId', data.userId || data.result);
+    
     return { success: true, token: 'auth-token', userId: data.userId || data.result };
   } catch (error) {
     console.error('Login error:', error);
@@ -62,6 +66,16 @@ export const signupUser = async (userData) => {
             throw new Error(data.error || `Error: ${response.status}`);
         }
       }
+      
+      // Store user info in memory after successful signup
+      currentUser = {
+        userId: data.result || data.userId,
+        authenticated: true
+      };
+      
+      // Also store in localStorage for persistence across page refreshes
+      localStorage.setItem('authToken', 'auth-token');
+      localStorage.setItem('userId', data.result || data.userId);
       
       return data;
     } else {
@@ -164,6 +178,10 @@ export const logout = async () => {
     
     // Clear in-memory user data
     currentUser = null;
+    
+    // Also clear localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
     
     return true;
   } catch (error) {

@@ -6,13 +6,12 @@ const API_URL = (typeof window !== 'undefined' && window.env && window.env.REACT
 
 export const getMedicalReports = async () => {
   try {
-    // No need to manually pass userId - the server will identify the user from the session cookie
     const response = await fetch(`${API_URL}/medical/scanReports`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Important for cookies
+      credentials: 'include', 
     });
 
     if (!response.ok) {
@@ -33,13 +32,12 @@ export const getMedicalReports = async () => {
 
 export const createMedicalReport = async (reportData) => {
   try {
-    // No need to manually add userId - it will be extracted from session
     const response = await fetch(`${API_URL}/medical/scanReports`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Important for cookies
+      credentials: 'include',
       body: JSON.stringify(reportData),
     });
 

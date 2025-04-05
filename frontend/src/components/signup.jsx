@@ -158,7 +158,13 @@ const Signup = () => {
       });
 
       console.log("Signup successful:", result);
-      // Show success message before navigation
+
+      // Store auth information in localStorage to persist between page refreshes
+      if (result && (result.result || result.userId)) {
+        localStorage.setItem('authToken', 'auth-token');
+        localStorage.setItem('userId', result.result || result.userId);
+      }
+
       const timer = setTimeout(() => {
         navigate("/login");
       }, 1500);
@@ -166,9 +172,7 @@ const Signup = () => {
     } catch (err) {
       console.error("Signup error:", err);
       
-      // Enhanced error handling to deal with HTML responses
       if (err.response) {
-        // The server responded with a status code outside the 2xx range
         if (err.response.status === 409) {
           setError('An account with this email already exists.');
         } else if (err.response.status === 500) {
@@ -177,7 +181,6 @@ const Signup = () => {
           setError(`Error ${err.response.status}: ${err.response.statusText || 'Something went wrong'}`);
         }
       } else if (err.request) {
-        // The request was made but no response was received
         setError('Unable to connect to the server. Please check your internet connection.');
       } else if (err.message && (err.message.includes('JSON') || err.message.includes('Unexpected token'))) {
         // JSON parsing error - received HTML instead of JSON
