@@ -67,8 +67,13 @@ const TestScheduleCalendar = () => {
           
           // Only filter if there are reports
           if (data.reports && data.reports.length > 0) {
-            const todaysTests = filterTestsByDate(today, data.reports);
-            setFilteredTests(todaysTests);
+            const todaysDate = new Date(); // Get today's actual date
+          todaysDate.setHours(0, 0, 0, 0); // normalize time
+
+          // ✅ Trigger logic as if date was selected
+          setSelectedDate(todaysDate); // visually select
+          const tests = filterTestsByDate(todaysDate, data.reports); // filter
+          setFilteredTests(tests);
           } else {
             setFilteredTests([]);
           }
