@@ -62,6 +62,15 @@ app.use("/api/auth", authRoute);
 app.use("/api/medical", medicalRoute);  // Add the medical routes
 // app.use("/api/profile", profileRoute);
 
+// Add default route to check if server is running
+app.get("/", (req, res) => {
+  res.status(200).json({ 
+    message: "Server is running successfully", 
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString()
+  });
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
